@@ -22,8 +22,19 @@ def main():
         "random_starts": True
     }
     # maxiters = 200000(
-    maxiters = 10
-    EPS = 0.25
+    maxiters = 10000
+    hyper_params = {
+        "maxiter": maxiters,
+
+        "epsilon": 0.25,  # Will be ignored if is_eps_decay = True
+
+        "is_printing": True,
+
+        "is_eps_decay": True,
+        "eps_start": 1.0,
+        "eps_end": 0.01,
+        "eps_decay_rate": 1.0/maxiters
+    }
 
     # -------- #
     #  Task A  #
@@ -40,7 +51,7 @@ def main():
 
     env_A = MA4RoomsWrapper(env_A)
 
-    Q_A, stats_A = Goal_Oriented_Q_learning(env_A, maxiter=maxiters, is_printing=True, epsilon=EPS)
+    Q_A, stats_A = Goal_Oriented_Q_learning(env_A, **hyper_params)
 
     all_test_starts = [MA4Rooms.TL_CNR, MA4Rooms.TR_CNR, MA4Rooms.BL_CNR, MA4Rooms.BR_CNR]
     all_test_joint_starts = list(itertools.product(all_test_starts, all_test_starts))
@@ -52,7 +63,6 @@ def main():
     # n_goals = 16
     # n_actions = env_A.action_space.n
     # Q_A_arr = extended_q_dict_to_numpy(Q_A, n_states, n_goals, n_actions)
-
 
     benchmark.follow_policies(env_A, Q_A, all_test_joint_starts, "trajs/Q_A_traj.txt")
 
@@ -70,7 +80,7 @@ def main():
 
     env_B = MA4RoomsWrapper(env_B)
 
-    Q_B, stats_B = Goal_Oriented_Q_learning(env_B, maxiter=maxiters, is_printing=True, epsilon=EPS)
+    Q_B, stats_B = Goal_Oriented_Q_learning(env_B, **hyper_params)
 
     benchmark.follow_policies(env_B, Q_B, all_test_joint_starts, "trajs/Q_B_traj.txt")
 

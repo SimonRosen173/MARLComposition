@@ -132,7 +132,8 @@ def Q_learning(env, Q_optimal=None, gamma=1, epsilon=1, alpha=1, maxiter=100, ma
 
 
 def Goal_Oriented_Q_learning(env, T_states=None, Q_optimal=None,
-                             gamma=1, epsilon=1, alpha=1, maxiter=100, maxstep=100, is_printing=False):
+                             gamma=1, epsilon=1, alpha=1, maxiter=100, maxstep=100, is_printing=False,
+                             is_eps_decay=False, eps_start=1, eps_end=0, eps_decay_rate=1e-3):
     """
     Implements Goal Oriented Q_learning
 
@@ -164,6 +165,11 @@ def Goal_Oriented_Q_learning(env, T_states=None, Q_optimal=None,
     T=0
     state = env.reset()
     stats["R"].append(0)
+    if is_eps_decay:
+        epsilon = eps_start
+
+    print(f"Episode 0 - ", end="")
+
     while stop_cond(k):
         probs = behaviour_policy(state, epsilon=epsilon)
         action = np.random.choice(np.arange(len(probs)), p=probs)            
@@ -191,9 +197,16 @@ def Goal_Oriented_Q_learning(env, T_states=None, Q_optimal=None,
         state = state_
         T+=1
         if done:
+            # Decay after each episode
+            if is_eps_decay:
+                epsilon -= eps_decay_rate
+                if epsilon < eps_end:
+                    epsilon = eps_end
+                    is_eps_decay = False
+
             if is_printing:
-                print(f"reward = {stats['R'][k]}")
-                print(f"Episode {k} - ", end="")
+                print(f"return = {stats['R'][k]}, epsilon={epsilon}")
+                print(f"Episode {k+1} - ", end="")
 
             state = env.reset()
             stats["R"].append(0)
