@@ -146,6 +146,7 @@ def Goal_Oriented_Q_learning(env, T_states=None, Q_optimal=None,
     Q -- New estimate of Q function
     """
     N = min(env.rmin, (env.rmin-env.rmax)*env.diameter)
+    # states, goals, actions
     Q = defaultdict(lambda: defaultdict(lambda: np.zeros(env.action_space.n)))
     behaviour_policy =  epsilon_greedy_generalised_policy_improvement(env, Q, epsilon = epsilon)
     
@@ -164,9 +165,12 @@ def Goal_Oriented_Q_learning(env, T_states=None, Q_optimal=None,
     state = env.reset()
     stats["R"].append(0)
     while stop_cond(k):
-        probs = behaviour_policy(state, epsilon = epsilon)
+        probs = behaviour_policy(state, epsilon=epsilon)
         action = np.random.choice(np.arange(len(probs)), p=probs)            
         state_, reward, done, _ = env.step(action)
+
+        if reward > 0 and not done:
+            print("?")
         
         stats["R"][k] += reward
         
@@ -199,10 +203,31 @@ def Goal_Oriented_Q_learning(env, T_states=None, Q_optimal=None,
     return Q, stats
 
 
-def follow_extended_q_policy(env: gym.Env, Q, is_rendering=True, render_mode="", render_delay=0):
+def follow_extended_q_policy(env: gym.Env, Q, joint_start_state=None, is_rendering=True, render_mode="",
+                             render_delay=0, max_steps=100):
     behaviour_policy = epsilon_greedy_generalised_policy_improvement(env, Q, epsilon=0)
+    step_no = 0
 
-    state = env.reset()
+    state = env.reset(joint_start_state=joint_start_state)
+    if is_rendering:
+        env.render(mode=render_mode)
+
+    is_done = False
+
+    while not is_done and step_no < max_steps:
+        step_no += 1
+        probs = behaviour_policy(state, epsilon=0)
+        action = np.random.choice(np.arange(len(probs)), p=probs)
+        state, reward, is_done, _ = env.step(action)
+
+        if is_rendering:
+            env.render(mode=render_mode)
+
+
+def follow_q_policy(env: gym.Env, Q, joint_start_state=None, is_rendering=True, render_mode="", render_delay=0):
+    behaviour_policy = epsilon_greedy_policy_improvement(env, Q, epsilon=0)
+
+    state = env.reset(joint_start_state=joint_start_state)  # Should work?
     if is_rendering:
         env.render(mode=render_mode)
 
@@ -211,11 +236,26 @@ def follow_extended_q_policy(env: gym.Env, Q, is_rendering=True, render_mode="",
     while not is_done:
         probs = behaviour_policy(state, epsilon=0)
         action = np.random.choice(np.arange(len(probs)), p=probs)
-        state, reward, done, _ = env.step(action)
+        state, reward, is_done, _ = env.step(action)
 
         if is_rendering:
             env.render(mode=render_mode)
 
+
+def save_extended_q(Q):
+    pass
+
+
+# def extended_q_dict_to_numpy(Q_dict: defaultdict, no_states, no_goals, no_actions):
+#     np_arr = np.zeros((no_states, no_goals, no_actions))
+#     for state_key in Q_dict.keys():
+#         goal_dict = Q_dict[state_key]
+#         for goal_key in goal_dict.keys():
+#             np_arr[state_key][goal_key] = np.copy(goal_dict[goal_key])
+#
+#             # for action_key in action_dict.keys():
+#             #     np_arr[state_key][goal_key][action_key] = action_dict[action_key]
+#     return np_arr
 
 #########################################################################################
 def EQ_NP(EQ):
@@ -313,9 +353,9 @@ def AVG(Q1, Q2):
 
 
 #########################################################################################
-def EQMAX(EQ,rmax=2): #Estimating EQ_max
+def EQMAX(EQ, rmax=2, n_actions=5): #Estimating EQ_max
     rmax = rmax
-    EQ_max = defaultdict(lambda: defaultdict(lambda: np.zeros(5)))
+    EQ_max = defaultdict(lambda: defaultdict(lambda: np.zeros(n_actions)))
     for s in list(EQ.keys()):
         for g in list(EQ[s].keys()):
             c = rmax-max(EQ[g][g])
@@ -326,9 +366,9 @@ def EQMAX(EQ,rmax=2): #Estimating EQ_max
     return EQ_max
 
 
-def EQMIN(EQ,rmin=-0.1): #Estimating EQ_min
+def EQMIN(EQ,rmin=-0.1,n_actions=5): #Estimating EQ_min
     rmin = rmin
-    EQ_min = defaultdict(lambda: defaultdict(lambda: np.zeros(5)))
+    EQ_min = defaultdict(lambda: defaultdict(lambda: np.zeros(n_actions)))
     for s in list(EQ.keys()):
         for g in list(EQ[s].keys()):
             c = rmin-max(EQ[g][g])
@@ -339,29 +379,29 @@ def EQMIN(EQ,rmin=-0.1): #Estimating EQ_min
     return EQ_min
 
 
-def NOT(EQ, EQ_max=None, EQ_min=None):
-    EQ_max = EQ_max if EQ_max else EQMAX(EQ)
-    EQ_min = EQ_min if EQ_min else EQMIN(EQ)
-    EQ_not = defaultdict(lambda: defaultdict(lambda: np.zeros(5)))
+def NOT(EQ, EQ_max=None, EQ_min=None, n_actions=5, rmin=-0.1, rmax=2):
+    EQ_max = EQ_max if EQ_max else EQMAX(EQ, n_actions=n_actions, rmax=rmax)
+    EQ_min = EQ_min if EQ_min else EQMIN(EQ, n_actions=n_actions, rmin=rmin)
+    EQ_not = defaultdict(lambda: defaultdict(lambda: np.zeros(n_actions)))
     for s in list(EQ.keys()):
         for g in list(EQ[s].keys()):
             EQ_not[s][g] = (EQ_max[s][g]+EQ_min[s][g]) - EQ[s][g]    
     return EQ_not
 
 
-def OR(EQ1, EQ2):
-    EQ = defaultdict(lambda: defaultdict(lambda: np.zeros(5)))
+def OR(EQ1, EQ2, n_actions=5):
+    EQ = defaultdict(lambda: defaultdict(lambda: np.zeros(n_actions)))
     for s in list(EQ1.keys()):
         for g in list(EQ1[s].keys()):
             EQ[s][g] = np.max([EQ1[s][g],EQ2[s][g]],axis=0)
     return EQ
 
 
-def AND(EQ1, EQ2):
-    EQ = defaultdict(lambda: defaultdict(lambda: np.zeros(5)))
+def AND(EQ1, EQ2, n_actions=5):
+    EQ = defaultdict(lambda: defaultdict(lambda: np.zeros(n_actions)))
     for s in list(EQ1.keys()):
         for g in list(EQ1[s].keys()):
-            EQ[s][g] = np.min([EQ1[s][g],EQ2[s][g]],axis=0)
+            EQ[s][g] = np.min([EQ1[s][g], EQ2[s][g]], axis=0)
     return EQ
 
 #########################################################################################

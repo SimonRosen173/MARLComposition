@@ -1,5 +1,7 @@
+import pickle
+
 from GridWorld import *
-from library import Goal_Oriented_Q_learning, Q_learning
+from library import Goal_Oriented_Q_learning, Q_learning, follow_extended_q_policy, follow_q_policy
 
 
 def main():
@@ -9,7 +11,7 @@ def main():
     joint_start_state = [(1, 1), (11, 11)]
 
     env = MA4Rooms(n_agents=2, n_actions=5,
-                   goal_reward=10,
+                   goal_reward=2, collide_reward=-0.02,
                    joint_goals=joint_goals, joint_start_state=joint_start_state, random_starts=True)
 
     env = MA4RoomsWrapper(env)
@@ -20,10 +22,16 @@ def main():
     env.render()
 
     # Q, stats = Q_learning(env, maxiter=200, is_printing=True, epsilon=0.2)
-    Q, stats = Goal_Oriented_Q_learning(env, maxiter=200, is_printing=True, epsilon=0.2)
+    # follow_q_policy(env, Q, is_rendering=True, render_mode="ascii")
 
-    print(Q)
-    print(stats)
+    # maxiter = 100000
+    maxiter = 1
+
+    Q, stats = Goal_Oriented_Q_learning(env, maxiter=maxiter, is_printing=True, epsilon=0.2)
+
+    follow_extended_q_policy(env, Q, is_rendering=True, render_mode="ascii")
+    # print(Q)
+    # print(stats)
     # Q, stats = Goal_Oriented_Q_learning(env)
 
 

@@ -1,8 +1,10 @@
 import sys
 from typing import Tuple, Optional, Union, List
+from Visualisation import vis
 
 import gym
 import numpy as np
+import itertools
 
 UP = 0
 DOWN = 1
@@ -20,10 +22,11 @@ class MAGridWorld(gym.Env):
                  terminal_states: Union[List[int], List[Tuple[int, int]]],
                  joint_start_state: Optional[Union[List[Tuple[int, int]], List[int]]] = None,
                  grid: Optional[Union[np.ndarray, str]] = None,
-                 step_reward: bool = -0.01, collide_reward: bool = -1,
-                 goal_reward: bool = 2, terminal_reward: bool = -1,
-                 is_flatten_states: bool = True,
-                 random_starts: bool = False,
+                 step_reward: float = -0.01, collide_reward: float = -1,
+                 goal_reward: float = 2, terminal_reward: float = -1,
+                 is_flatten_states: float = True,
+                 random_starts: float = False,
+                 is_warning = True,
                  ):
         if grid is None:
             # 4 rooms domain -> Probs move to 4 rooms subclass
@@ -118,7 +121,18 @@ class MAGridWorld(gym.Env):
 
         if self._random_starts:
             joint_start_state = self._rand_valid_start()
+
         self._joint_start_state: List[Tuple[int, int]] = joint_start_state
+
+        if is_warning:
+            if step_reward > 0:
+                print("WARNING: step_reward is positive")
+            if collide_reward > 0:
+                print("WARNING: collide_reward is positive")
+            if terminal_reward > 0:
+                print("WARNING: terminal_reward is positive")
+            if goal_reward < 0:
+                print("WARNING: goal_reward is negative")
 
         self._step_reward = step_reward
         self._goal_reward = goal_reward
@@ -129,12 +143,14 @@ class MAGridWorld(gym.Env):
 
         # Public variables
         self.rmax = self._goal_reward
-        self.rmin = -100
+        self.rmin = min(self._collide_reward, self._step_reward) * 100
         self.diameter = grid.shape[0] + grid.shape[1] - 4
 
         self.n_agents = n_agents
         self.n_actions = n_actions
         self.grid_shape = grid.shape
+
+        self.trajectory: Optional[List[List[Tuple[int, int]]]] = None
 
     def _in_bounds(self, coord: Tuple[int, int]):
         x, y = coord
@@ -216,7 +232,7 @@ class MAGridWorld(gym.Env):
 
         next_joint_state: List[Tuple[int, int]] = []
         assert type(self._joint_state) == list and type(self._joint_state[0]) == tuple, \
-            "Type mismatch in self._joint_state. Must be of form list[tuple[int, int]]"
+            f"Type mismatch in self._joint_state={self._joint_state}. Must be of form list[tuple[int, int]]."
 
         n_agents = self._n_agents
         is_done = False
@@ -288,9 +304,19 @@ class MAGridWorld(gym.Env):
                                        in joint_state]
         return flat_joint_state
 
-    def reset(self, *kwargs) -> Union[List[Tuple[int, int]], List[int]]:
+    def reset(self, joint_start_state=None, **kwargs) -> Union[List[Tuple[int, int]], List[int]]:
         if self._random_starts:
             self._joint_start_state = self._rand_valid_start()
+
+        if "joint_start_state" in kwargs.keys():
+            joint_start_state = kwargs["joint_start_state"]
+
+        if joint_start_state is not None:
+            assert type(joint_start_state) == list and type(joint_start_state[0]) == tuple, \
+                f"Type mismatch in joint_start_start={joint_start_state}. Must be of form list[tuple[int, int]]."
+            self._joint_start_state = joint_start_state
+
+        self.trajectory = [self._joint_start_state]
 
         self._joint_state = self._joint_start_state
         if self._is_flatten_states:
@@ -306,6 +332,9 @@ class MAGridWorld(gym.Env):
             joint_action = list(np.unravel_index(joint_action, (self._n_actions, self._n_actions)))
 
         next_state, reward, is_done, info = self._take_joint_action(joint_action)
+
+        self.trajectory.append(next_state)
+
         if self._is_flatten_states:
             next_state = self._flatten_joint_state(next_state)
 
@@ -350,12 +379,22 @@ class MAGridWorld(gym.Env):
         else:
             raise NotImplementedError()
 
+    def get_grid(self):
+        return self._grid
+    # def set_start_state(self, start_state, is_flat):
+    #
+
 
 class MA4Rooms(MAGridWorld):
     TLC = (3, 3)
     TRC = (3, 9)
     BLC = (9, 3)
     BRC = (9, 9)
+
+    TL_CNR = (1, 1)
+    TR_CNR = (1, 11)
+    BL_CNR = (11, 1)
+    BR_CNR = (11, 11)
 
     def __init__(self, n_agents: int, n_actions: int,
                  # States can be represented in flattened form (int index) or non-flattened (y, x) form
@@ -427,13 +466,28 @@ class MA4RoomsWrapper:
         next_state = int(np.ravel_multi_index(next_joint_state, self._joint_state_shape))
         return next_state, reward, is_done, info
 
-    def reset(self) -> int:
-        joint_state = self._env.reset()
+    def reset(self, **kwargs) -> int:
+        joint_state = self._env.reset(**kwargs)
         state = int(np.ravel_multi_index(joint_state, self._joint_state_shape))
         return state
 
     def render(self, mode="ascii"):
         self._env.render(mode=mode)
+
+    # Should just do a call to associated method in GridWorld env
+    def get_trajectory(self, is_delimited=False):
+        if is_delimited:
+            return self._delimitate_trajectory()
+        else:
+            return self._env.trajectory
+
+    def _delimitate_trajectory(self):
+        del_str = "|".join([";".join([",".join([str(el) for el in state]) for state in joint_state])
+                            for joint_state in self._env.trajectory])
+        return del_str
+
+    def get_grid(self):
+        return self._env.get_grid()
 
 
 def main():
@@ -498,7 +552,90 @@ def test_wrapper():
     env.render()
 
 
+def test_traj():
+    # 6,9;9,7|6,10;9,7|7,10;9,8|8,10;9,7|8,9;9,8|8,9;9,8|8,9;9,8|9,9;9,9|9,9;9,9|9,9;9,9|9,9;9,9|9,9;9,9|9,9;9,9|9,9;9,9|9,9;9,9|9,9;9,9|9,9;9,9|9,9;9,9
+    # R  ;W  |D   ;R  |D   ;L  |L   ;R  |W  ;W  |W  ;W  |
+    joint_goals = [[MA4Rooms.TLC, MA4Rooms.BRC]]
+    joint_start_state = [(6, 9), (9, 7)]
+    env = MA4Rooms(n_agents=2, n_actions=5,
+                   joint_goals=joint_goals, joint_start_state=joint_start_state, is_flatten_states=False)
+    print(env.reset())
+    env.render()
+
+    print("###############")
+    next_state, reward, is_done, info = env.step([RIGHT, WAIT])
+    print(f"{next_state}, {reward}, {is_done}, {info}")
+    env.render()
+
+    print("###############")
+    next_state, reward, is_done, info = env.step([DOWN, RIGHT])
+    print(f"{next_state}, {reward}, {is_done}, {info}")
+    env.render()
+
+    print("###############")
+    next_state, reward, is_done, info = env.step([DOWN, LEFT])
+    print(f"{next_state}, {reward}, {is_done}, {info}")
+    env.render()
+
+    print("###############")
+    next_state, reward, is_done, info = env.step([LEFT, RIGHT])
+    print(f"{next_state}, {reward}, {is_done}, {info}")
+    env.render()
+
+    print("###############")
+    next_state, reward, is_done, info = env.step([DOWN, RIGHT])
+    print(f"{next_state}, {reward}, {is_done}, {info}")
+    env.render()
+
+    print("###############")
+    next_state, reward, is_done, info = env.step([WAIT, WAIT])
+    print(f"{next_state}, {reward}, {is_done}, {info}")
+    env.render()
+
+
+def test_vis():
+    joint_goals = [[MA4Rooms.TLC, MA4Rooms.BRC]]
+    joint_start_state = [(1, 1), (11, 11)]
+    env = MA4Rooms(n_agents=2, n_actions=5,
+                   joint_goals=joint_goals, joint_start_state=joint_start_state, random_starts=True)
+
+    new_vis = vis.VisGrid(env._grid, (400, 400), 25, tick_time=0.5)
+    new_vis.window.getMouse()
+    new_vis.window.close()
+    pass
+
+def test_1():
+    env_kwargs = {
+        "n_agents": 2,
+        "n_actions": 5,
+        "goal_reward": 2,
+        "collide_reward": -0.02,
+        "joint_start_state": [(1, 1), (11, 11)],  # It currently doesn't work if this isn't specified
+        "random_starts": True
+    }
+    # maxiters = 200000(
+    maxiters = 100000
+    EPS = 0.25
+
+    # -------- #
+    #  Task A  #
+    # -------- #
+    # Agent 1 must go to a bottom goal (i.e., BLC or BRC)
+    # Agent 2 can go to any goal
+    g_bottom = [MA4Rooms.BLC, MA4Rooms.BRC]
+    g_all = [MA4Rooms.BLC, MA4Rooms.BRC, MA4Rooms.TLC, MA4Rooms.TRC]
+    joint_goals = list(itertools.product(g_bottom, g_all))
+    joint_goals = [list(el) for el in joint_goals]
+
+    env_kwargs["joint_goals"] = joint_goals
+    env_A = MA4Rooms(**env_kwargs)
+
+    env_A = MA4RoomsWrapper(env_A)
+
+
 if __name__ == "__main__":
     # main()
     # test_ma4rooms()
-    test_wrapper()
+    # test_wrapper()
+    # test_traj()
+    test_1()
