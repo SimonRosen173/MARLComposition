@@ -1,7 +1,8 @@
 from functools import partial
 
 from GridWorld import *
-from library import Goal_Oriented_Q_learning, Q_learning, follow_extended_q_policy, follow_q_policy, extended_q_dict_to_numpy
+from library import Goal_Oriented_Q_learning, Q_learning, follow_extended_q_policy, follow_q_policy
+# extended_q_dict_to_numpy
 from library import OR, AND, NOT
 import benchmark
 
@@ -47,15 +48,14 @@ def main():
     # Remove joint_starts with collisions
     all_test_joint_starts = list(filter(lambda x: x[0] != x[1], all_test_joint_starts))
 
-    n_states = env_A.observation_space.n
-    n_goals = 16
-    n_actions = env_A.action_space.n
-    Q_A_arr = extended_q_dict_to_numpy(Q_A, n_states, n_goals, n_actions)
+    # n_states = env_A.observation_space.n
+    # n_goals = 16
+    # n_actions = env_A.action_space.n
+    # Q_A_arr = extended_q_dict_to_numpy(Q_A, n_states, n_goals, n_actions)
 
 
     benchmark.follow_policies(env_A, Q_A, all_test_joint_starts, "trajs/Q_A_traj.txt")
 
-    # exit()
     # -------- #
     #  Task B  #
     # -------- #
