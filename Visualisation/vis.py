@@ -319,8 +319,35 @@ def example():
     # print(grid)
 
 
+def test_vis_grid():
+    import numpy as np
+    grid_str = \
+        "1 1 1 1 1 1 1 1 1 1 1 1 1\n" \
+        "1 0 0 0 0 1 1 1 0 0 0 0 1\n" \
+        "1 0 0 0 0 0 0 0 0 0 0 0 1\n" \
+        "1 0 0 0 0 1 1 1 0 0 0 0 1\n" \
+        "1 1 0 1 1 1 1 1 0 0 0 0 1\n" \
+        "1 1 0 1 1 1 1 1 1 1 0 1 1\n" \
+        "1 1 0 1 1 1 1 1 1 1 0 1 1\n" \
+        "1 1 0 1 1 1 1 1 1 1 0 1 1\n" \
+        "1 1 0 1 1 1 1 1 1 1 0 1 1\n" \
+        "1 0 0 0 0 1 1 1 0 0 0 0 1\n" \
+        "1 0 0 0 0 0 0 0 0 0 0 0 1\n" \
+        "1 0 0 0 0 1 1 1 0 0 0 0 1\n" \
+        "1 1 1 1 1 1 1 1 1 1 1 1 1"
+
+    grid = [[int(el) for el in row.split(" ")] for row in grid_str.split("\n")]
+    grid = np.asarray(grid)
+
+    vis_grid = VisGrid(grid, (400, 400), 25, tick_time=0.5)
+    vis_grid.window.getMouse()
+
+    vis_grid.window.close()
+
+
 if __name__ == "__main__":
-    example()
+    # example()
+    test_vis_grid()
     # win = GraphWin(width=350, height=350)
     # Point(100, 50).draw(win)
     # print(win.winfo_width())

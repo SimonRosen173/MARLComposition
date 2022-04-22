@@ -27,8 +27,8 @@ def animate_traj_file(file_name, grid, goals=None):
     vis_grid.window.close()
 
 
-# full_path = r"C:\Users\Simon\Documents\Varsity\2022\Code\MARLComposition"
-full_path = r"F:\Documents\Varsity\2022\Code\MARLComposition"
+full_path = r"C:\Users\Simon\Documents\Varsity\2022\Code\MARLComposition"
+# full_path = r"F:\Documents\Varsity\2022\Code\MARLComposition"
 
 def vis_A():
     joint_goals = [[MA4Rooms.TLC, MA4Rooms.BRC]]
@@ -73,6 +73,21 @@ def vis_C():
     animate_traj_file(full_path + "/trajs/5/Q_comp_and_traj.txt", grid)
 
 
+def vis_corridors_A(folder_no):
+    joint_goals = [[MA4Rooms.CORRIDOR_TLC, MA4Rooms.CORRIDOR_BRC]]
+    joint_start_state = [(1, 1), (11, 11)]
+    env = MA4Rooms(n_agents=2, n_actions=5,
+                   joint_goals=joint_goals, joint_start_state=joint_start_state,
+                   random_starts=True, rooms_type="corridors")
+    grid = env.get_grid()
+
+    # agent 1 -> red
+    # agent 2 -> green
+    # Agent 1 (red) must go to a bottom goal (i.e., BLC or BRC)
+    # Agent 2 (green) can go to any goal
+    animate_traj_file(full_path + f"/trajs/corridors/{folder_no}/Q_A_traj.txt", grid)
+
+
 if __name__ == "__main__":
-    vis_C()
+    vis_corridors_A(3)
 

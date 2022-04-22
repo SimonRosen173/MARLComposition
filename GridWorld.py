@@ -22,11 +22,12 @@ class MAGridWorld(gym.Env):
                  terminal_states: Union[List[int], List[Tuple[int, int]]],
                  joint_start_state: Optional[Union[List[Tuple[int, int]], List[int]]] = None,
                  grid: Optional[Union[np.ndarray, str]] = None,
-                 step_reward: float = -0.01, collide_reward: float = -1,
+                 step_reward: float = -0.02, wait_reward: float = - 0.01,
+                 collide_reward: float = -1,
                  goal_reward: float = 2, terminal_reward: float = -1,
                  is_flatten_states: float = True,
                  random_starts: float = False,
-                 is_warning = True,
+                 is_warning: bool = True,
                  ):
         if grid is None:
             # 4 rooms domain -> Probs move to 4 rooms subclass
@@ -127,6 +128,8 @@ class MAGridWorld(gym.Env):
         if is_warning:
             if step_reward > 0:
                 print("WARNING: step_reward is positive")
+            if wait_reward > 0:
+                print("WARNING: wait_reward is positive")
             if collide_reward > 0:
                 print("WARNING: collide_reward is positive")
             if terminal_reward > 0:
@@ -135,6 +138,7 @@ class MAGridWorld(gym.Env):
                 print("WARNING: goal_reward is negative")
 
         self._step_reward = step_reward
+        self._wait_reward = wait_reward
         self._goal_reward = goal_reward
         self._collide_reward = collide_reward
         self._terminal_reward = terminal_reward
@@ -216,8 +220,24 @@ class MAGridWorld(gym.Env):
 
         return False
 
-    # def _join_state_in_joint_goal(self, joint_state):
-    #     pass
+    # Note: only implemented for 2 agents currently
+    def _check_collisions(self, curr_joint_state, next_joint_state):
+        if self._n_agents != 2:
+            raise NotImplementedError()
+
+        # if curr_joint_state is None or next_joint_state is None:
+        #     print("?")
+
+        # Collision in next_joint_state and not a terminal state
+        if next_joint_state[0] == next_joint_state[1] and next_joint_state[0] not in self._terminal_states:
+            return True, "default"
+
+        # Pass through collision. I.e. agents must pass through each other to reach next state
+        # i.e. agents swap states
+        if next_joint_state[0] == curr_joint_state[1] and next_joint_state[1] == curr_joint_state[0]:
+            return True, "passthrough"
+
+        return False, ""
 
     # Apply dynamics
     # Return [next_joint_state, reward, is_done, info]
@@ -237,7 +257,9 @@ class MAGridWorld(gym.Env):
         n_agents = self._n_agents
         is_done = False
         info = ""
-        reward = self._step_reward
+
+        # reward = self._step_reward
+        reward = 0
 
         # state_invalid = False
 
@@ -254,6 +276,11 @@ class MAGridWorld(gym.Env):
             elif action == WAIT:
                 next_state = curr_state
 
+            if action == WAIT:
+                reward += self._wait_reward
+            else:
+                reward += self._step_reward
+
             # If next state is not valid then agent does not move
             if not self._is_coord_valid(next_state):
                 next_state = curr_state
@@ -262,20 +289,26 @@ class MAGridWorld(gym.Env):
 
             next_joint_state.append(next_state)
 
-        agent_collision = False
-        # Check for agent collisions. If there is a collision between agents, and they are not at a terminal state,
-        # then they cannot move and must go to original state.
-        for i in range(0, n_agents):
-            for j in range(i+1, n_agents):
-                # Collisions are allowed at terminal states
-                if next_joint_state[i] == next_joint_state[j] and next_joint_state[i] not in self._terminal_states:
-                    next_joint_state[i] = self._joint_state[i]
-                    next_joint_state[j] = self._joint_state[j]
-                    agent_collision = True
+        # agent_collision = False
+        # # Check for agent collisions. If there is a collision between agents, and they are not at a terminal state,
+        # # then they cannot move and must go to original state.
+        # for i in range(0, n_agents):
+        #     for j in range(i+1, n_agents):
+        #         # Collisions are allowed at terminal states
+        #         if next_joint_state[i] == next_joint_state[j] and next_joint_state[i] not in self._terminal_states:
+        #             next_joint_state[i] = self._joint_state[i]
+        #             next_joint_state[j] = self._joint_state[j]
+        #             agent_collision = True
+        #
+        #             reward += self._collide_reward
+
+        agent_collision, collision_type = self._check_collisions(self._joint_state, next_joint_state)
 
         if agent_collision:
-            reward = self._collide_reward
-            info += "agent collision outside terminal state, "
+            # This is only valid for 2 agents
+            reward += self._collide_reward
+            next_joint_state = self._joint_state
+            info += f"agent collision ({collision_type}) outside terminal state, "
 
         # NOTE: Episode is only completed once joint wait action taken
         if joint_action == [WAIT for _ in range(n_agents)]:
@@ -391,47 +424,83 @@ class MA4Rooms(MAGridWorld):
     BLC = (9, 3)
     BRC = (9, 9)
 
+    CORRIDOR_TLC = (2, 3)
+    CORRIDOR_TRC = (2, 9)
+    CORRIDOR_BLC = (10, 3)
+    CORRIDOR_BRC = (10, 9)
+
     TL_CNR = (1, 1)
     TR_CNR = (1, 11)
     BL_CNR = (11, 1)
     BR_CNR = (11, 11)
 
     def __init__(self, n_agents: int, n_actions: int,
+                 rooms_type: str = "default",
+                 **kwargs
                  # States can be represented in flattened form (int index) or non-flattened (y, x) form
-                 joint_goals: Union[List[List[int]], List[List[Tuple[int, int]]]],  # flattened or not flattened
-                 joint_start_state: Optional[Union[List[Tuple[int, int]], List[int]]] = None,
-                 step_reward: float = -0.01, collide_reward: float = -1,
-                 goal_reward: float = 2, terminal_reward: float = -1,
-                 is_flatten_states: bool = True,
-                 random_starts: bool = False,):
+                 # joint_goals: Union[List[List[int]], List[List[Tuple[int, int]]]],  # flattened or not flattened
+                 # joint_start_state: Optional[Union[List[Tuple[int, int]], List[int]]] = None,
+                 # step_reward: float = -0.01,
+                 # collide_reward: float = -1,
+                 # goal_reward: float = 2, terminal_reward: float = -1,
+                 # is_flatten_states: bool = True,
+                 # random_starts: bool = False,
+                 ):
 
-        grid_str = \
-            "1 1 1 1 1 1 1 1 1 1 1 1 1\n" \
-            "1 0 0 0 0 0 1 0 0 0 0 0 1\n" \
-            "1 0 0 0 0 0 0 0 0 0 0 0 1\n" \
-            "1 0 0 0 0 0 1 0 0 0 0 0 1\n" \
-            "1 0 0 0 0 0 1 0 0 0 0 0 1\n" \
-            "1 0 0 0 0 0 1 0 0 0 0 0 1\n" \
-            "1 1 0 1 1 1 1 0 0 0 0 0 1\n" \
-            "1 0 0 0 0 0 1 1 1 1 0 1 1\n" \
-            "1 0 0 0 0 0 1 0 0 0 0 0 1\n" \
-            "1 0 0 0 0 0 1 0 0 0 0 0 1\n" \
-            "1 0 0 0 0 0 0 0 0 0 0 0 1\n" \
-            "1 0 0 0 0 0 1 0 0 0 0 0 1\n" \
-            "1 1 1 1 1 1 1 1 1 1 1 1 1"
+        grid_str = ""
+        if rooms_type == "default":
+            grid_str = \
+                "1 1 1 1 1 1 1 1 1 1 1 1 1\n" \
+                "1 0 0 0 0 0 1 0 0 0 0 0 1\n" \
+                "1 0 0 0 0 0 0 0 0 0 0 0 1\n" \
+                "1 0 0 0 0 0 1 0 0 0 0 0 1\n" \
+                "1 0 0 0 0 0 1 0 0 0 0 0 1\n" \
+                "1 0 0 0 0 0 1 0 0 0 0 0 1\n" \
+                "1 1 0 1 1 1 1 0 0 0 0 0 1\n" \
+                "1 0 0 0 0 0 1 1 1 1 0 1 1\n" \
+                "1 0 0 0 0 0 1 0 0 0 0 0 1\n" \
+                "1 0 0 0 0 0 1 0 0 0 0 0 1\n" \
+                "1 0 0 0 0 0 0 0 0 0 0 0 1\n" \
+                "1 0 0 0 0 0 1 0 0 0 0 0 1\n" \
+                "1 1 1 1 1 1 1 1 1 1 1 1 1"
+        elif rooms_type == "corridors":
+            grid_str = \
+                "1 1 1 1 1 1 1 1 1 1 1 1 1\n" \
+                "1 0 0 0 0 1 1 1 0 0 0 0 1\n" \
+                "1 0 0 0 0 0 0 0 0 0 0 0 1\n" \
+                "1 0 0 0 0 1 1 1 0 0 0 0 1\n" \
+                "1 1 0 1 1 1 1 1 0 0 0 0 1\n" \
+                "1 1 0 1 1 1 1 1 1 1 0 1 1\n" \
+                "1 1 0 1 1 1 1 1 1 1 0 1 1\n" \
+                "1 1 0 1 1 1 1 1 1 1 0 1 1\n" \
+                "1 1 0 1 1 1 1 1 1 1 0 1 1\n" \
+                "1 0 0 0 0 1 1 1 0 0 0 0 1\n" \
+                "1 0 0 0 0 0 0 0 0 0 0 0 1\n" \
+                "1 0 0 0 0 1 1 1 0 0 0 0 1\n" \
+                "1 1 1 1 1 1 1 1 1 1 1 1 1"
+            # TLC - (2, 3)
+            # TRC - (2, 9)
+            # BLC - (10, 3)
+            # BRC - (10, 9)
+
+        else:
+            raise NotImplementedError()
 
         grid = [[int(el) for el in row.split(" ")] for row in grid_str.split("\n")]
         grid = np.asarray(grid)
 
-        terminal_states = [MA4Rooms.TLC, MA4Rooms.TRC, MA4Rooms.BLC, MA4Rooms.BRC]
+        if rooms_type == "corridors":
+            terminal_states = [MA4Rooms.CORRIDOR_TLC, MA4Rooms.CORRIDOR_TRC,
+                               MA4Rooms.CORRIDOR_BLC, MA4Rooms.CORRIDOR_BRC]
+        else:
+            terminal_states = [MA4Rooms.TLC, MA4Rooms.TRC, MA4Rooms.BLC, MA4Rooms.BRC]
 
-        super().__init__(n_agents, n_actions,
-                                    joint_goals=joint_goals, joint_start_state=joint_start_state,
-                                    terminal_states=terminal_states,
-                                    grid=grid,
-                                    step_reward=step_reward, collide_reward=collide_reward,
-                                    goal_reward=goal_reward, terminal_reward=terminal_reward,
-                                    is_flatten_states=is_flatten_states, random_starts=random_starts)
+        super().__init__(n_agents, n_actions, terminal_states=terminal_states, grid=grid, **kwargs)
+        # joint_goals=joint_goals, joint_start_state=joint_start_state,
+        # ,
+        # step_reward=step_reward, collide_reward=collide_reward,
+        # goal_reward=goal_reward, terminal_reward=terminal_reward,
+        # is_flatten_states=is_flatten_states, random_starts=random_starts)
 
 
 # Hacky class to make it look single agent
@@ -635,7 +704,7 @@ def test_1():
 
 if __name__ == "__main__":
     # main()
-    # test_ma4rooms()
+    test_ma4rooms()
     # test_wrapper()
     # test_traj()
-    test_1()
+    # test_1()

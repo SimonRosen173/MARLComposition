@@ -1,0 +1,5 @@
+3 - Fixed pass through error
+	- Using corridors map
+	- Q_A_traj.txt:
+		Red must go to bottom goal
+		Green must go to top goal
