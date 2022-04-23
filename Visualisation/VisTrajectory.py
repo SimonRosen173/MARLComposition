@@ -2,6 +2,7 @@ from Visualisation import vis
 from GridWorld import *
 import os
 
+
 def animate_traj_file(file_name, grid, goals=None):
     traj_str_arr = []
     with open(file_name) as f:
@@ -91,5 +92,5 @@ def vis_corridors(folder_no, file_name):
 
 
 if __name__ == "__main__":
-    vis_corridors(5, "Q_comp_traj.txt")
+    vis_corridors(9, "Q_comp_traj.txt")
 

@@ -139,7 +139,7 @@ def Q_learning(env, Q_optimal=None, gamma=1, epsilon=1, alpha=1, maxiter=100, ma
 
 
 def Goal_Oriented_Q_learning(env, T_states=None, Q_optimal=None,
-                             gamma=1, epsilon=1, alpha=1, maxiter=100, maxstep=100, is_printing=False,
+                             gamma=1, epsilon=1, alpha=1, maxiter=100, maxstep=100, is_printing=False, print_prefix="",
                              is_eps_decay=False, eps_start=1, eps_end=0, eps_decay_rate=1e-3):
     """
     Implements Goal Oriented Q_learning
@@ -175,7 +175,7 @@ def Goal_Oriented_Q_learning(env, T_states=None, Q_optimal=None,
     if is_eps_decay:
         epsilon = eps_start
 
-    print(f"Episode 0 - ", end="")
+    # print(f"Episode 0 - ", end="")
 
     while stop_cond(k):
         probs = behaviour_policy(state, epsilon=epsilon)
@@ -212,8 +212,8 @@ def Goal_Oriented_Q_learning(env, T_states=None, Q_optimal=None,
                     is_eps_decay = False
 
             if is_printing:
-                print(f"return = {stats['R'][k]}, epsilon={epsilon}")
-                print(f"Episode {k+1} - ", end="")
+                print(f"[{print_prefix}] Episode {k} - return = {stats['R'][k]}, epsilon={epsilon}")
+                # print(f"Episode {k+1} - ", end="")
 
             state = env.reset()
             stats["R"].append(0)
@@ -265,11 +265,12 @@ def follow_q_policy(env: gym.Env, Q, joint_start_state=None, is_rendering=True, 
 # Super hacky and bad way to do this -> Convert to normal dict from default dict then pickle
 def save_extended_Q(Q, file_path):
     # Q = defaultdict(lambda: defaultdict(lambda: np.zeros(env.action_space.n)))
+    new_Q = dict()  # Otherwise will modify original dict
     for state_key in Q.keys():
-        Q[state_key] = dict(Q[state_key])
-    Q = dict(Q)
+        new_Q[state_key] = dict(Q[state_key])
+    # Q = dict(Q)
     with open(file_path, "wb") as f:
-        pickle.dump(Q, f)
+        pickle.dump(new_Q, f)
 
 
 def load_extended_Q(file_path, n_actions):
