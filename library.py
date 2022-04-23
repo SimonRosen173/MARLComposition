@@ -1,10 +1,11 @@
+import pickle
+
 import gym
 import numpy as np
 
 from collections import defaultdict
 from copy import deepcopy
 from ast import literal_eval
-
 
 #########################################################################################
 def Q_equal(Q1,Q2,epsilon=1e-5):    
@@ -26,6 +27,12 @@ def EQ_equal(EQ1,EQ2,epsilon=1e-5):
                 if not (abs(v1-v2)<epsilon or (v1<-30 and v2<-30)):
                     return False
     return True
+
+#########################################################################################
+# Functions to replace lambda functions for default dicts
+# Q = defaultdict(lambda: defaultdict(lambda: np.zeros(env.action_space.n)))
+
+# TODO
 
 
 #########################################################################################
@@ -255,9 +262,26 @@ def follow_q_policy(env: gym.Env, Q, joint_start_state=None, is_rendering=True, 
             env.render(mode=render_mode)
 
 
-def save_extended_q(Q):
-    pass
+# Super hacky and bad way to do this -> Convert to normal dict from default dict then pickle
+def save_extended_Q(Q, file_path):
+    # Q = defaultdict(lambda: defaultdict(lambda: np.zeros(env.action_space.n)))
+    for state_key in Q.keys():
+        Q[state_key] = dict(Q[state_key])
+    Q = dict(Q)
+    with open(file_path, "wb") as f:
+        pickle.dump(Q, f)
 
+
+def load_extended_Q(file_path, n_actions):
+    with open(file_path, "rb") as f:
+        Q = pickle.load(f)
+
+    Q = defaultdict(lambda: defaultdict(lambda: np.zeros(n_actions)), Q)
+
+    for state_key in Q.keys():
+        Q[state_key] = defaultdict(lambda: np.zeros(n_actions), Q[state_key])
+
+    return Q
 
 # def extended_q_dict_to_numpy(Q_dict: defaultdict, no_states, no_goals, no_actions):
 #     np_arr = np.zeros((no_states, no_goals, no_actions))
