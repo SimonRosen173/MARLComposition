@@ -3,3 +3,5 @@
 	- Q_A_traj.txt:
 		Red must go to bottom goal
 		Green must go to top goal
+
+5 - 10k iterations

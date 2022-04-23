@@ -1,6 +1,6 @@
 from Visualisation import vis
 from GridWorld import *
-
+import os
 
 def animate_traj_file(file_name, grid, goals=None):
     traj_str_arr = []
@@ -27,8 +27,9 @@ def animate_traj_file(file_name, grid, goals=None):
     vis_grid.window.close()
 
 
-full_path = r"C:\Users\Simon\Documents\Varsity\2022\Code\MARLComposition"
-# full_path = r"F:\Documents\Varsity\2022\Code\MARLComposition"
+curr_dir = os.getcwd()
+full_path = "\\".join(curr_dir.split("\\")[:-1])  # Remove last folder from path
+
 
 def vis_A():
     joint_goals = [[MA4Rooms.TLC, MA4Rooms.BRC]]
@@ -73,7 +74,7 @@ def vis_C():
     animate_traj_file(full_path + "/trajs/5/Q_comp_and_traj.txt", grid)
 
 
-def vis_corridors_A(folder_no):
+def vis_corridors(folder_no, file_name):
     joint_goals = [[MA4Rooms.CORRIDOR_TLC, MA4Rooms.CORRIDOR_BRC]]
     joint_start_state = [(1, 1), (11, 11)]
     env = MA4Rooms(n_agents=2, n_actions=5,
@@ -85,9 +86,10 @@ def vis_corridors_A(folder_no):
     # agent 2 -> green
     # Agent 1 (red) must go to a bottom goal (i.e., BLC or BRC)
     # Agent 2 (green) can go to any goal
-    animate_traj_file(full_path + f"/trajs/corridors/{folder_no}/Q_A_traj.txt", grid)
+    animate_traj_file(full_path + f"/trajs/corridors/{folder_no}/{file_name}", grid)
+    # Q_A_traj.txt
 
 
 if __name__ == "__main__":
-    vis_corridors_A(3)
+    vis_corridors(5, "Q_comp_traj.txt")
 

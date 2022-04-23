@@ -23,7 +23,7 @@ def main():
         "rooms_type": "corridors"
     }
 
-    maxiters = 1000
+    maxiters = 50000
     hyper_params = {
         "maxiter": maxiters,
 
@@ -71,7 +71,6 @@ def main():
 
     benchmark.follow_policies(env_A, Q_A, all_test_joint_starts, "trajs/Q_A_traj.txt")
 
-    exit()
     # -------- #
     #  Task B  #
     # -------- #
