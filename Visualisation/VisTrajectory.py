@@ -2,7 +2,9 @@ from Visualisation import vis
 from GridWorld import *
 import os
 
-def animate_traj_file(file_name, grid, goals=None):
+
+def animate_traj_file(file_name, grid, goals=None, tick_time=0.5,
+                      save_video=False, tmp_folder="", video_path=""):
     traj_str_arr = []
     with open(file_name) as f:
         line_str = f.readline()
@@ -17,11 +19,13 @@ def animate_traj_file(file_name, grid, goals=None):
 
     paths = [[list(el) for el in list(zip(*traj))] for traj in traj_arr]
 
-    vis_grid = vis.VisGrid(grid, (400, 400), 25, tick_time=0.5)
+    vis_grid = vis.VisGrid(grid, (400, 400), 25, tick_time=tick_time)
     vis_grid.window.getMouse()
 
     for i in range(len(paths)):
-        vis_grid.animate_multi_path(paths[i], is_pos_xy=False)
+        vis_grid.animate_multi_path(paths[i], is_pos_xy=False,
+                                    save_video=save_video, tmp_folder=tmp_folder,
+                                    video_path=video_path + f"/vid_{i}.gif")
         vis_grid.window.getMouse()
 
     vis_grid.window.close()
@@ -74,7 +78,7 @@ def vis_C():
     animate_traj_file(full_path + "/trajs/5/Q_comp_and_traj.txt", grid)
 
 
-def vis_corridors(folder_no, file_name):
+def vis_corridors(folder_no, file_name, tick_time=0.5):
     joint_goals = [[MA4Rooms.CORRIDOR_TLC, MA4Rooms.CORRIDOR_BRC]]
     joint_start_state = [(1, 1), (11, 11)]
     env = MA4Rooms(n_agents=2, n_actions=5,
@@ -86,10 +90,14 @@ def vis_corridors(folder_no, file_name):
     # agent 2 -> green
     # Agent 1 (red) must go to a bottom goal (i.e., BLC or BRC)
     # Agent 2 (green) can go to any goal
-    animate_traj_file(full_path + f"/trajs/corridors/{folder_no}/{file_name}", grid)
+    traj_path = full_path + f"/trajs/corridors/{folder_no}/{file_name}"
+    tmp_folder_path = full_path + "/traj_gifs/tmp"
+    video_path = full_path + f"/traj_gifs"
+    animate_traj_file(traj_path, grid, tick_time=tick_time,
+                      save_video=True, tmp_folder=tmp_folder_path, video_path=video_path)
     # Q_A_traj.txt
 
 
 if __name__ == "__main__":
-    vis_corridors(5, "Q_comp_traj.txt")
+    vis_corridors(5, "Q_A_traj.txt", tick_time=0.1)
 

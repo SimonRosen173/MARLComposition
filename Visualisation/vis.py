@@ -3,6 +3,8 @@ from PIL import Image
 import os
 import time
 from typing import List, Tuple, Optional, Dict, Set
+import imageio
+import re
 
 # class Vis:
 #     pass
@@ -112,7 +114,15 @@ class VisGrid:
             VisGrid.move_to(circle, curr_x, curr_y, x, y)
             time.sleep(self.tick_time)
 
-    def animate_multi_path(self, paths, is_pos_xy=True):
+    def animate_multi_path(self, paths, is_pos_xy=True,
+                           save_video=False, tmp_folder="", video_path=""):
+        img_index = 0
+        if save_video:
+            # delete tmp images
+            for f in os.listdir(tmp_folder):
+                if re.search(r"img_\d+.png", str(f)) is not None:
+                    os.remove(os.path.join(tmp_folder, f))
+
         win = self.window
         message = Text(Point(20, 10), "0")
         message.draw(win)
@@ -158,7 +168,23 @@ class VisGrid:
                 curr_x, curr_y = curr_cent.x, curr_cent.y
                 VisGrid.move_to(circle, curr_x, curr_y, x, y)
 
+            if save_video:
+                self.save_to_png(tmp_folder + f"/img_{img_index}")
+                img_index += 1
             time.sleep(self.tick_time)
+
+        if save_video:
+            images = []
+            for i in range(img_index):
+                curr_file_path = f"{tmp_folder}/img_{i}.png"
+                images.append(imageio.imread(curr_file_path))
+
+            imageio.mimsave(video_path, images, format="gif", duration=0.5)
+
+            # delete tmp images
+            for f in os.listdir(tmp_folder):
+                if re.search(r"img_\d+.png", str(f)) is not None:
+                    os.remove(os.path.join(tmp_folder, f))
 
     def animate_mapd(self, agents, start_locs, is_pos_xy=True):
         win = self.window
