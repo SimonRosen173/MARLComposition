@@ -1,2 +1,1 @@
-3 - 50k iterations
-    - Corresponding trajs: trajs/corridors/9
+3 - 50k episodes
