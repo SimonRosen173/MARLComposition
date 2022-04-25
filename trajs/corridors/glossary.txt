@@ -5,3 +5,6 @@
 		Green must go to top goal
 
 5 - 10k iterations
+
+9 - 50k iterations
+    - Corresponding Q_pkls: Q_pkls/corridors/3

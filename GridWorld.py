@@ -225,16 +225,12 @@ class MAGridWorld(gym.Env):
         if self._n_agents != 2:
             raise NotImplementedError()
 
-        # if curr_joint_state is None or next_joint_state is None:
-        #     print("?")
-
         # Collision in next_joint_state and not a terminal state
         if next_joint_state[0] == next_joint_state[1] and next_joint_state[0] not in self._terminal_states:
             return True, "default"
 
         # Pass through collision. I.e. agents must pass through each other to reach next state
-        # i.e. agents swap states
-        if next_joint_state[0] == curr_joint_state[1] and next_joint_state[1] == curr_joint_state[0]:
+        if next_joint_state[0] == curr_joint_state[1] or next_joint_state[1] == curr_joint_state[0]:
             return True, "passthrough"
 
         return False, ""
