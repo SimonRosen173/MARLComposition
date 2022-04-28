@@ -64,7 +64,7 @@ def main():
     # n_actions = env_A.action_space.n
     # Q_A_arr = extended_q_dict_to_numpy(Q_A, n_states, n_goals, n_actions)
 
-    benchmark.follow_policies(env_A, Q_A, all_test_joint_starts, "trajs/Q_A_traj.txt")
+    benchmark.follow_policies(env_A, Q_A, all_test_joint_starts, "trajs/corridors/11/Q_A_traj.txt")
 
     # -------- #
     #  Task B  #
@@ -82,7 +82,7 @@ def main():
 
     Q_B, stats_B = Goal_Oriented_Q_learning(env_B, **hyper_params)
 
-    benchmark.follow_policies(env_B, Q_B, all_test_joint_starts, "trajs/Q_B_traj.txt")
+    benchmark.follow_policies(env_B, Q_B, all_test_joint_starts, "trajs/corridors/11/Q_B_traj.txt")
 
     # -------------------------- #
     #  Task (NOT A) AND (NOT B)  #
@@ -99,11 +99,11 @@ def main():
     Q_comp_and = AND_PTL(Q_A, Q_B)
 
     # env shouldn't really matter here since dynamics are the same and only the rewards are different
-    benchmark.follow_policies(env_A, Q_comp_and, all_test_joint_starts, "trajs/Q_comp_and_traj.txt")
+    benchmark.follow_policies(env_A, Q_comp_and, all_test_joint_starts, "trajs/corridors/11/Q_comp_and_traj.txt")
 
     Q_comp = AND_PTL(NOT_PTL(Q_A), NOT_PTL(Q_B))
     # # env shouldn't really matter here since dynamics are the same and only the rewards are different
-    benchmark.follow_policies(env_A, Q_comp, all_test_joint_starts, "trajs/Q_comp_traj.txt")
+    benchmark.follow_policies(env_A, Q_comp, all_test_joint_starts, "trajs/corridors/11/Q_comp_traj.txt")
 
 
 if __name__ == '__main__':

@@ -8,3 +8,7 @@
 
 9 - 50k iterations
     - Corresponding Q_pkls: Q_pkls/corridors/3
+
+11 - 50k iterations
+	- Fixed pass through collision in dynamics
+	- Corresponding Q_pkls: Q_pkls/corridors/4

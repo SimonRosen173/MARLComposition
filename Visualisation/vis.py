@@ -39,6 +39,8 @@ class VisGrid:
 
         self._draw_grid()
         self._circles = None
+        self._labels = None
+        self._joint_goal_shapes = None
 
     def _draw_grid(self):
         win = self.window
@@ -114,8 +116,14 @@ class VisGrid:
             VisGrid.move_to(circle, curr_x, curr_y, x, y)
             time.sleep(self.tick_time)
 
-    def animate_multi_path(self, paths, is_pos_xy=True,
+    def animate_multi_path(self, paths, is_pos_xy=True, joint_goals=None,
                            save_video=False, tmp_folder="", video_path=""):
+
+        if joint_goals is None:
+            joint_goals = []
+        if len(joint_goals) > 0 and is_pos_xy:
+            raise NotImplementedError("Goals must be specified as (y, x)")
+
         img_index = 0
         if save_video:
             # delete tmp images
@@ -138,6 +146,53 @@ class VisGrid:
             for circle in self._circles:
                 circle.undraw()
                 del circle
+
+        if self._labels is not None:
+            for label in self._labels:
+                label.undraw()
+                del label
+
+        if self._joint_goal_shapes is not None:
+            for joint_goal_shape in self._joint_goal_shapes:
+                for goal_shape in joint_goal_shape:
+                    goal_shape.undraw()
+                    del goal_shape
+
+        # Draw goals -> Only shows goals for 2 agents rn
+        self._joint_goal_shapes = []
+
+        goal_margin = int(self.tile_size * 0.05)
+        goal_shape_size = int(self.tile_size * 0.35)
+
+        for joint_goal in joint_goals:
+            # Only drawing for first 2 agents
+            # Coord for agent 1 goal
+            x1, y1 = self.get_coord_from_grid(joint_goal[0][1], joint_goal[0][0])
+            # Coord for agent 2 goal
+            x2, y2 = self.get_coord_from_grid(joint_goal[1][1], joint_goal[1][0])
+
+            # Top left in tile
+            rect_1 = Rectangle(Point(x1 + goal_margin,
+                                     y1 + goal_margin),
+                               Point(x1 + goal_margin + goal_shape_size,
+                                     y1 + goal_margin + goal_shape_size))
+
+            # Bottom right in tile
+            rect_2 = Rectangle(Point(x2 + self.tile_size - (goal_shape_size + goal_margin),
+                                     y2 + self.tile_size - (goal_shape_size + goal_margin)),
+                               Point(x2 + self.tile_size - goal_margin,
+                                     y2 + self.tile_size - goal_margin))
+
+            rect_1.setOutline(agent_colors[0])
+            rect_2.setOutline(agent_colors[1])
+
+            rect_1.setFill(agent_colors[0])
+            rect_2.setFill(agent_colors[1])
+
+            rect_1.draw(win)
+            rect_2.draw(win)
+
+            self._joint_goal_shapes.append([rect_1, rect_2])
 
         self._circles = []
         for i, circle in enumerate(circles):

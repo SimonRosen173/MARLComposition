@@ -72,12 +72,17 @@ def epsilon_greedy_generalised_policy_improvement(env, Q, epsilon = 1):
     
     def policy_improved(state, goal = None, epsilon = epsilon):
         probs = np.ones(env.action_space.n, dtype=float)*(epsilon/env.action_space.n)
-        values = [Q[state][goal]] if goal else [Q[state][goal] for goal in Q[state].keys()]
-        if len(values)==0:
-            best_action = np.random.randint(env.action_space.n)
+        if goal:
+            values = Q[state][goal]
         else:
-            values = np.max(values,axis=0)
-            best_action = np.random.choice(np.flatnonzero(values == values.max()))
+            values = [Q[state][goal]] if goal else [Q[state][goal] for goal in Q[state].keys()]
+            if len(values)==0:
+                best_action = np.random.randint(env.action_space.n)
+                probs[best_action] += 1.0 - epsilon
+                return probs
+            else:
+                values = np.max(values,axis=0)
+        best_action = np.random.choice(np.flatnonzero(values == values.max()))
         probs[best_action] += 1.0 - epsilon
         return probs
 
@@ -176,9 +181,9 @@ def Goal_Oriented_Q_learning(env, T_states=None, Q_optimal=None,
         epsilon = eps_start
 
     # print(f"Episode 0 - ", end="")
-
+    goal = None
     while stop_cond(k):
-        probs = behaviour_policy(state, epsilon=epsilon)
+        probs = behaviour_policy(state, goal, epsilon=epsilon)
         action = np.random.choice(np.arange(len(probs)), p=probs)            
         state_, reward, done, _ = env.step(action)
 
@@ -204,6 +209,9 @@ def Goal_Oriented_Q_learning(env, T_states=None, Q_optimal=None,
         state = state_
         T+=1
         if done:
+            goals = list(sMem.keys())
+            # if goals:
+            #     goal = goals[np.random.randint(len(goals))]
             # Decay after each episode
             if is_eps_decay:
                 epsilon -= eps_decay_rate
@@ -212,7 +220,8 @@ def Goal_Oriented_Q_learning(env, T_states=None, Q_optimal=None,
                     is_eps_decay = False
 
             if is_printing:
-                print(f"[{print_prefix}] Episode {k} - return = {stats['R'][k]}, epsilon={epsilon}")
+                print(f"[{print_prefix}] Episode {k} - return = {stats['R'][k]}, epsilon={epsilon}, "
+                      f"len(goals) = {len(goals)}, n_states = {len(Q)}")
                 # print(f"Episode {k+1} - ", end="")
 
             state = env.reset()
@@ -236,6 +245,7 @@ def follow_extended_q_policy(env: gym.Env, Q, joint_start_state=None, is_renderi
 
     while not is_done and step_no < max_steps:
         step_no += 1
+        curr_Q = Q[state]
         probs = behaviour_policy(state, epsilon=0)
         action = np.random.choice(np.arange(len(probs)), p=probs)
         state, reward, is_done, _ = env.step(action)
@@ -275,12 +285,12 @@ def save_extended_Q(Q, file_path):
 
 def load_extended_Q(file_path, n_actions):
     with open(file_path, "rb") as f:
-        Q = pickle.load(f)
+        Q_in = pickle.load(f)
 
-    Q = defaultdict(lambda: defaultdict(lambda: np.zeros(n_actions)), Q)
+    Q = defaultdict(lambda: defaultdict(lambda: np.zeros(n_actions)), Q_in)
 
-    for state_key in Q.keys():
-        Q[state_key] = defaultdict(lambda: np.zeros(n_actions), Q[state_key])
+    for state_key in Q_in.keys():
+        Q[state_key] = defaultdict(lambda: np.zeros(n_actions), Q_in[state_key])
 
     return Q
 
