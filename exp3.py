@@ -9,9 +9,9 @@ import multiprocessing
 
 import itertools
 
-BASE_PKL_PATH = "Q_pkls/corridors/7/"
-TRAJ_FOLDER_NO = 15
-MAXITERS = 1000
+BASE_PKL_PATH = "Q_pkls/corridors/8/"
+TRAJ_FOLDER_NO = 16
+MAXITERS = 50000
 
 ENV_KWARGS = {
     "n_agents": 2,

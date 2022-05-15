@@ -12,3 +12,19 @@
 11 - 50k iterations
 	- Fixed pass through collision in dynamics
 	- Corresponding Q_pkls: Q_pkls/corridors/4
+
+16 - 50k iterations
+	ENV_KWARGS = {
+    		"n_agents": 2,
+    		"n_actions": 5,
+    		"goal_reward": 2,
+    		"wait_reward": -0.01,
+    		"step_reward": -0.01,
+    		"wait_at_goal_reward": -0.001,
+    		"terminal_reward": -2,
+    		"collide_reward": -0.1,
+    		"rmin": -10,
+    		"joint_start_state": [(1, 1), (11, 11)],  # It currently doesn't work if this isn't specified
+    		"random_starts": True,
+    		"rooms_type": "corridors"
+	}

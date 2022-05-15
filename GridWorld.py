@@ -1,6 +1,12 @@
 import sys
 from typing import Tuple, Optional, Union, List, Dict
-from Visualisation import vis
+
+try:
+    from Visualisation import vis
+except ImportError as e:
+    print(f"vis cannot be imported: {e}")
+
+
 
 import gym
 import numpy as np
