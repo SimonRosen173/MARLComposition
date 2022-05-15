@@ -210,8 +210,9 @@ def Goal_Oriented_Q_learning(env, T_states=None, Q_optimal=None,
         T+=1
         if done:
             goals = list(sMem.keys())
-            # if goals:
-            #     goal = goals[np.random.randint(len(goals))]
+            if goals:
+                goal = goals[np.random.randint(len(goals))]
+
             # Decay after each episode
             if is_eps_decay:
                 epsilon -= eps_decay_rate

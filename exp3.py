@@ -9,15 +9,20 @@ import multiprocessing
 
 import itertools
 
-BASE_PKL_PATH = "Q_pkls/corridors/5/"
-TRAJ_FOLDER_NO = 12
+BASE_PKL_PATH = "Q_pkls/corridors/7/"
+TRAJ_FOLDER_NO = 15
 MAXITERS = 1000
 
 ENV_KWARGS = {
     "n_agents": 2,
     "n_actions": 5,
     "goal_reward": 2,
+    "wait_reward": -0.01,
+    "step_reward": -0.01,
+    "wait_at_goal_reward": -0.001,
+    "terminal_reward": -2,
     "collide_reward": -0.1,
+    "rmin": -10,
     "joint_start_state": [(1, 1), (11, 11)],  # It currently doesn't work if this isn't specified
     "random_starts": True,
     "rooms_type": "corridors"
@@ -30,7 +35,7 @@ HYPER_PARAMS = {
 
     "is_printing": True,
 
-    "is_eps_decay": False,
+    "is_eps_decay": True,
     "eps_start": 1.0,
     "eps_end": 0.01,
     "eps_decay_rate": 1.0 / MAXITERS
@@ -130,7 +135,7 @@ def test_composition(Q_A, Q_B, env):
     n_actions = env.action_space.n
 
     AND_PTL = partial(AND, n_actions=n_actions)
-    NOT_PTL = partial(NOT, n_actions=n_actions, rmin=-500, rmax=env.rmax)
+    NOT_PTL = partial(NOT, n_actions=n_actions, rmin=env.rmin, rmax=env.rmax)
 
     print("# A AND B #")
     Q_comp_and = AND_PTL(Q_A, Q_B)

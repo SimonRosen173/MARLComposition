@@ -1,5 +1,5 @@
 import sys
-from typing import Tuple, Optional, Union, List
+from typing import Tuple, Optional, Union, List, Dict
 from Visualisation import vis
 
 import gym
@@ -22,12 +22,16 @@ class MAGridWorld(gym.Env):
                  terminal_states: Union[List[int], List[Tuple[int, int]]],
                  joint_start_state: Optional[Union[List[Tuple[int, int]], List[int]]] = None,
                  grid: Optional[Union[np.ndarray, str]] = None,
-                 step_reward: float = -0.02, wait_reward: float = - 0.01,
+                 step_reward: float = -0.02,
+                 wait_reward: float = - 0.01, wait_at_goal_reward: float = -0.001,
                  collide_reward: float = -1,
                  goal_reward: float = 2, terminal_reward: float = -1,
+                 rmin: float = -2,
                  is_flatten_states: float = True,
                  random_starts: float = False,
                  is_warning: bool = True,
+                 render_mode: str = "ascii",
+                 render_options: Dict = {"tick_time": 0.01}
                  ):
         if grid is None:
             # 4 rooms domain -> Probs move to 4 rooms subclass
@@ -139,6 +143,7 @@ class MAGridWorld(gym.Env):
 
         self._step_reward = step_reward
         self._wait_reward = wait_reward
+        self._wait_at_goal_reward = wait_at_goal_reward
         self._goal_reward = goal_reward
         self._collide_reward = collide_reward
         self._terminal_reward = terminal_reward
@@ -147,7 +152,7 @@ class MAGridWorld(gym.Env):
 
         # Public variables
         self.rmax = self._goal_reward
-        self.rmin = min(self._collide_reward, self._step_reward) * 100
+        self.rmin = rmin  # min(self._collide_reward, self._step_reward) * 100
         self.diameter = grid.shape[0] + grid.shape[1] - 4
 
         self.n_agents = n_agents
@@ -155,6 +160,9 @@ class MAGridWorld(gym.Env):
         self.grid_shape = grid.shape
 
         self.trajectory: Optional[List[List[Tuple[int, int]]]] = None
+
+        self._render_mode = render_mode
+        self._vis_grid = None
 
     def _in_bounds(self, coord: Tuple[int, int]):
         x, y = coord
@@ -203,19 +211,19 @@ class MAGridWorld(gym.Env):
 
         return joint_state
 
-    def _joint_state_intersects_joint_goal(self, joint_state):
-        for state in joint_state:
-            if self._is_state_at_goal(state):
-                return True
-
-        return False
+    # def _joint_state_intersects_joint_goal(self, joint_state):
+    #     for state in joint_state:
+    #         if self._is_state_at_goal(state):
+    #             return True
+    #
+    #     return False
 
     # Check if coord is present in joint goals
-    def _is_state_at_goal(self, state):
+    def _is_agent_at_goal(self, state: Tuple[int, int], agent_ind: int):
         assert type(state) == tuple and len(state) == 2
 
         for joint_goal in self._joint_goals:
-            if state in joint_goal:
+            if state == joint_goal[agent_ind]:
                 return True
 
         return False
@@ -225,13 +233,15 @@ class MAGridWorld(gym.Env):
         if self._n_agents != 2:
             raise NotImplementedError()
 
-        # Collision in next_joint_state and not a terminal state
-        if next_joint_state[0] == next_joint_state[1] and next_joint_state[0] not in self._terminal_states:
-            return True, "default"
+        # if one of the agents is at a terminal state there cannot be a collision
+        if not (next_joint_state[0] in self._terminal_states or next_joint_state[1] in self._terminal_states):
+            # Collision in next_joint_state and not a terminal state
+            if next_joint_state[0] == next_joint_state[1]:
+                return True, "default"
 
-        # Pass through collision. I.e. agents must pass through each other to reach next state
-        if next_joint_state[0] == curr_joint_state[1] or next_joint_state[1] == curr_joint_state[0]:
-            return True, "passthrough"
+            # Pass through collision. I.e. agents must pass through each other to reach next state
+            if next_joint_state[0] == curr_joint_state[1] or next_joint_state[1] == curr_joint_state[0]:
+                return True, "passthrough"
 
         return False, ""
 
@@ -273,7 +283,10 @@ class MAGridWorld(gym.Env):
                 next_state = curr_state
 
             if action == WAIT:
-                reward += self._wait_reward
+                if self._is_agent_at_goal(next_state, i):
+                    reward += self._wait_at_goal_reward
+                else:
+                    reward += self._wait_reward
             else:
                 reward += self._step_reward
 
@@ -369,16 +382,27 @@ class MAGridWorld(gym.Env):
 
         return next_state, reward, is_done, info
 
-    def render(self, mode="ascii"):
-        obstacle_char = "#"
-        goal_char = "G"
-        terminal_char = "T"
-
+    def render(self, mode="ascii", render_options={"tick_time":0.1}):
         grid = self._grid
         joint_goals = self._joint_goals
         joint_state = self._joint_state
 
-        if mode == "ascii":
+        if mode == "canvas":
+            if self._vis_grid is None:
+                self._vis_grid = vis.VisGrid(grid, (400, 400), 25,
+                                             joint_goals=joint_goals, tick_time=render_options["tick_time"])
+
+                # # TEMP
+                # self._vis_grid.window.getMouse()
+
+            self._vis_grid.update_2_agents_pos(joint_state)
+
+            # self._vis_grid.window.getMouse()
+
+        elif mode == "ascii":
+            obstacle_char = "#"
+            goal_char = "G"
+            terminal_char = "T"
             grid_str_arr: List[List[str]] = [[" " for _ in range(grid.shape[1])] for _ in range(grid.shape[0])]
 
             # Obstacles
@@ -698,9 +722,61 @@ def test_1():
     env_A = MA4RoomsWrapper(env_A)
 
 
+def interactive_env():
+    ENV_KWARGS = {
+        "n_agents": 2,
+        "n_actions": 5,
+        "goal_reward": 2,
+        "collide_reward": -0.1,
+        "joint_start_state": [MA4Rooms.BR_CNR, MA4Rooms.BL_CNR],  # It currently doesn't work if this isn't specified
+        "random_starts": False,
+        "rooms_type": "corridors"
+    }
+
+    env_kwargs = ENV_KWARGS
+
+    g_all = [MA4Rooms.CORRIDOR_BLC, MA4Rooms.CORRIDOR_BRC,
+             MA4Rooms.CORRIDOR_TLC, MA4Rooms.CORRIDOR_TRC]
+
+    # ENV A
+    g_bottom = [MA4Rooms.CORRIDOR_BLC, MA4Rooms.CORRIDOR_BRC]
+
+    joint_goals = list(itertools.product(g_bottom, g_all))
+    joint_goals = [list(el) for el in joint_goals]
+
+    env_kwargs["joint_goals"] = joint_goals
+
+    env = MA4Rooms(**env_kwargs)
+    curr_state = env.reset()
+    # print(env.reset())
+    env.render(mode="canvas")
+
+    str_int_map = {
+        "U": UP,
+        "D": DOWN,
+        "L": LEFT,
+        "R": RIGHT,
+        "W": WAIT
+    }
+    input_str = ""
+    while True:
+        input_str = input("Input joint-action:")
+
+        if input_str.lower() == "exit":
+            break
+        joint_action = input_str.upper().split(",")
+        joint_action = [str_int_map[action] for action in joint_action]
+
+        next_state, reward, is_done, info = env.step(joint_action)
+        env.render(mode="canvas")
+        print(f"next_state={next_state}, reward={reward}, is_done={is_done}, info={info}")
+        print("##############")
+
+
 if __name__ == "__main__":
     # main()
-    test_ma4rooms()
+    # test_ma4rooms()
+    interactive_env()
     # test_wrapper()
     # test_traj()
     # test_1()
