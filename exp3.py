@@ -9,9 +9,9 @@ import multiprocessing
 
 import itertools
 
-BASE_PKL_PATH = "Q_pkls/corridors/8/"
-TRAJ_FOLDER_NO = 16
-MAXITERS = 50000
+BASE_PKL_PATH = "Q_pkls/corridors/17/"
+TRAJ_FOLDER_NO = 17
+MAXITERS = 1000
 
 ENV_KWARGS = {
     "n_agents": 2,
@@ -246,8 +246,8 @@ def load_Q(base_path):
 
     env = MA4RoomsWrapper(env)
 
-    Q_A = library.load_extended_Q(base_path + "Q_A.pkl", env.action_space.n)
-    Q_B = library.load_extended_Q(base_path + "Q_B.pkl", env.action_space.n)
+    Q_A = library.load_extended_Q(base_path + "Q_A.pkl")
+    Q_B = library.load_extended_Q(base_path + "Q_B.pkl")
 
     return Q_A, Q_B, env
 

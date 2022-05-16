@@ -123,5 +123,5 @@ def vis_corridors(folder_no, file_name, task_type, save_video=False, tick_time=0
 
 
 if __name__ == "__main__":
-    vis_corridors(14, "Q_comp_and_traj.txt", task_type="A_AND_B", save_video=True, tick_time=0.01)
+    vis_corridors(16, "Q_comp_and_traj.txt", task_type="A_AND_B", save_video=True, tick_time=0.01)
 

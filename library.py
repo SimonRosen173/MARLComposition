@@ -274,26 +274,61 @@ def follow_q_policy(env: gym.Env, Q, joint_start_state=None, is_rendering=True, 
 
 
 # Super hacky and bad way to do this -> Convert to normal dict from default dict then pickle
+# def save_extended_Q(Q, file_path):
+#     # Q = defaultdict(lambda: defaultdict(lambda: np.zeros(env.action_space.n)))
+#     new_Q = dict()  # Otherwise will modify original dict
+#     for state_key in Q.keys():
+#         new_Q[state_key] = dict(Q[state_key])
+#         # for goal_key in new_Q[state_key]:
+#         #     new_Q[state_key][goal_key] = new_Q[state_key][goal_key].as
+#     # Q = dict(Q)
+#     with open(file_path, "wb") as f:
+#         pickle.dump(new_Q, f)
+
+
 def save_extended_Q(Q, file_path):
-    # Q = defaultdict(lambda: defaultdict(lambda: np.zeros(env.action_space.n)))
-    new_Q = dict()  # Otherwise will modify original dict
-    for state_key in Q.keys():
-        new_Q[state_key] = dict(Q[state_key])
-    # Q = dict(Q)
+    new_Q = dict(Q)
+    n_actions = -1
+
+    for outer_key in new_Q.keys():
+        new_Q[outer_key] = dict(new_Q[outer_key])
+        for inner_key in new_Q[outer_key].keys():
+            new_Q[outer_key][inner_key] = new_Q[outer_key][inner_key].tolist()
+            if n_actions < 0:
+                n_actions = len(new_Q[outer_key][inner_key])
+
+    save_dict = {"Q": new_Q, "n_actions": n_actions}
     with open(file_path, "wb") as f:
-        pickle.dump(new_Q, f)
+        pickle.dump(save_dict, f)
 
 
-def load_extended_Q(file_path, n_actions):
+def load_extended_Q(file_path):
     with open(file_path, "rb") as f:
-        Q_in = pickle.load(f)
+        save_dict = pickle.load(f)
 
-    Q = defaultdict(lambda: defaultdict(lambda: np.zeros(n_actions)), Q_in)
+    n_actions = save_dict["n_actions"]
+    Q = save_dict["Q"]
 
-    for state_key in Q_in.keys():
-        Q[state_key] = defaultdict(lambda: np.zeros(n_actions), Q_in[state_key])
+    Q = defaultdict(lambda: defaultdict(lambda: np.zeros(n_actions)), Q)
+    for outer_key in Q.keys():
+        Q[outer_key] = defaultdict(lambda: np.zeros(n_actions), Q[outer_key])
+
+        for inner_key in Q[outer_key].keys():
+            Q[outer_key][inner_key] = np.array(Q[outer_key][inner_key])
 
     return Q
+
+
+# def load_extended_Q(file_path, n_actions):
+#     with open(file_path, "rb") as f:
+#         Q_in = pickle.load(f)
+#
+#     Q = defaultdict(lambda: defaultdict(lambda: np.zeros(n_actions)), Q_in)
+#
+#     for state_key in Q_in.keys():
+#         Q[state_key] = defaultdict(lambda: np.zeros(n_actions), Q_in[state_key])
+#
+#     return Q
 
 # def extended_q_dict_to_numpy(Q_dict: defaultdict, no_states, no_goals, no_actions):
 #     np_arr = np.zeros((no_states, no_goals, no_actions))
