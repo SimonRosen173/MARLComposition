@@ -233,7 +233,7 @@ def Goal_Oriented_Q_learning(env, T_states=None, Q_optimal=None,
     return Q, stats
 
 
-def follow_extended_q_policy(env: gym.Env, Q, joint_start_state=None, is_rendering=True, render_mode="",
+def follow_extended_q_policy(env: gym.Env, Q, joint_start_state=None, is_rendering=False, render_mode="",
                              render_delay=0, max_steps=100):
     behaviour_policy = epsilon_greedy_generalised_policy_improvement(env, Q, epsilon=0)
     step_no = 0

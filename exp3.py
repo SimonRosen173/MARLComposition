@@ -10,8 +10,8 @@ import multiprocessing
 import itertools
 
 BASE_PKL_PATH = "Q_pkls/corridors/17/"
-TRAJ_FOLDER_NO = 17
-MAXITERS = 1000
+TRAJ_FOLDER_NO = 18
+MAXITERS = 50000
 
 ENV_KWARGS = {
     "n_agents": 2,
@@ -42,79 +42,79 @@ HYPER_PARAMS = {
 }
 
 
-def main():
-    base_pkl_path = BASE_PKL_PATH
-    # base_pkl_path = "Q_pkls/corridors/4/"
-
-    env_kwargs = ENV_KWARGS
-    maxiters = MAXITERS
-    hyper_params = HYPER_PARAMS
-
-    # env_kwargs = {
-    #     "n_agents": 2,
-    #     "n_actions": 5,
-    #     "goal_reward": 2,
-    #     "collide_reward": -0.1,
-    #     "joint_start_state": [(1, 1), (11, 11)],  # It currently doesn't work if this isn't specified
-    #     "random_starts": True,
-    #     "rooms_type": "corridors"
-    # }
-
-    # maxiters = 50000
-
-    all_test_starts = [MA4Rooms.TL_CNR, MA4Rooms.TR_CNR, MA4Rooms.BL_CNR, MA4Rooms.BR_CNR]
-    all_test_joint_starts = list(itertools.product(all_test_starts, all_test_starts))
-    all_test_joint_starts = [list(el) for el in all_test_joint_starts]
-    all_test_joint_starts.append([(2, 2), (5, 2)])
-    # Remove joint_starts with collisions
-    all_test_joint_starts = list(filter(lambda x: x[0] != x[1], all_test_joint_starts))
-
-    g_all = [MA4Rooms.CORRIDOR_BLC, MA4Rooms.CORRIDOR_BRC,
-             MA4Rooms.CORRIDOR_TLC, MA4Rooms.CORRIDOR_TRC]
-
-    # -------- #
-    #  Task A  #
-    # -------- #
-    # Agent 1 must go to a bottom goal (i.e., BLC or BRC)
-    # Agent 2 can go to any goal
-    g_bottom = [MA4Rooms.CORRIDOR_BLC, MA4Rooms.CORRIDOR_BRC]
-
-    joint_goals = list(itertools.product(g_bottom, g_all))
-    joint_goals = [list(el) for el in joint_goals]
-
-    env_kwargs["joint_goals"] = joint_goals
-    env_A = MA4Rooms(**env_kwargs)
-
-    env_A = MA4RoomsWrapper(env_A)
-
-    Q_A, stats_A = Goal_Oriented_Q_learning(env_A, print_prefix="A", **hyper_params)
-
-    library.save_extended_Q(Q_A, base_pkl_path + "Q_A.pkl")
-
-    benchmark.follow_policies(env_A, Q_A, all_test_joint_starts,
-                              f"trajs/corridors/{TRAJ_FOLDER_NO}/Q_A_traj.txt")
-
-    # -------- #
-    #  Task B  #
-    # -------- #
-    # Agent 1 can go to any goal
-    # Agent 2 must go to a right goal (i.e., TRC or BRC)
-    g_right = [MA4Rooms.CORRIDOR_TRC, MA4Rooms.CORRIDOR_BRC]
-    joint_goals = list(itertools.product(g_all, g_right))
-    joint_goals = [list(el) for el in joint_goals]
-
-    env_kwargs["joint_goals"] = joint_goals
-    env_B = MA4Rooms(**env_kwargs)
-
-    env_B = MA4RoomsWrapper(env_B)
-
-    Q_B, stats_B = Goal_Oriented_Q_learning(env_B, print_prefix="B", **hyper_params)
-    library.save_extended_Q(Q_B, base_pkl_path + "Q_B.pkl")
-
-    benchmark.follow_policies(env_B, Q_B, all_test_joint_starts,
-                              f"trajs/corridors/{TRAJ_FOLDER_NO}/Q_B_traj.txt")
-
-    test_composition(Q_A, Q_B, env_A)
+# def main():
+#     base_pkl_path = BASE_PKL_PATH
+#     # base_pkl_path = "Q_pkls/corridors/4/"
+#
+#     env_kwargs = ENV_KWARGS
+#     maxiters = MAXITERS
+#     hyper_params = HYPER_PARAMS
+#
+#     # env_kwargs = {
+#     #     "n_agents": 2,
+#     #     "n_actions": 5,
+#     #     "goal_reward": 2,
+#     #     "collide_reward": -0.1,
+#     #     "joint_start_state": [(1, 1), (11, 11)],  # It currently doesn't work if this isn't specified
+#     #     "random_starts": True,
+#     #     "rooms_type": "corridors"
+#     # }
+#
+#     # maxiters = 50000
+#
+#     all_test_starts = [MA4Rooms.TL_CNR, MA4Rooms.TR_CNR, MA4Rooms.BL_CNR, MA4Rooms.BR_CNR]
+#     all_test_joint_starts = list(itertools.product(all_test_starts, all_test_starts))
+#     all_test_joint_starts = [list(el) for el in all_test_joint_starts]
+#     all_test_joint_starts.append([(2, 2), (5, 2)])
+#     # Remove joint_starts with collisions
+#     all_test_joint_starts = list(filter(lambda x: x[0] != x[1], all_test_joint_starts))
+#
+#     g_all = [MA4Rooms.CORRIDOR_BLC, MA4Rooms.CORRIDOR_BRC,
+#              MA4Rooms.CORRIDOR_TLC, MA4Rooms.CORRIDOR_TRC]
+#
+#     # -------- #
+#     #  Task A  #
+#     # -------- #
+#     # Agent 1 must go to a bottom goal (i.e., BLC or BRC)
+#     # Agent 2 can go to any goal
+#     g_bottom = [MA4Rooms.CORRIDOR_BLC, MA4Rooms.CORRIDOR_BRC]
+#
+#     joint_goals = list(itertools.product(g_bottom, g_all))
+#     joint_goals = [list(el) for el in joint_goals]
+#
+#     env_kwargs["joint_goals"] = joint_goals
+#     env_A = MA4Rooms(**env_kwargs)
+#
+#     env_A = MA4RoomsWrapper(env_A)
+#
+#     Q_A, stats_A = Goal_Oriented_Q_learning(env_A, print_prefix="A", **hyper_params)
+#
+#     library.save_extended_Q(Q_A, base_pkl_path + "Q_A.pkl")
+#
+#     benchmark.follow_policies(env_A, Q_A, all_test_joint_starts,
+#                               f"trajs/corridors/{TRAJ_FOLDER_NO}/Q_A_traj.txt")
+#
+#     # -------- #
+#     #  Task B  #
+#     # -------- #
+#     # Agent 1 can go to any goal
+#     # Agent 2 must go to a right goal (i.e., TRC or BRC)
+#     g_right = [MA4Rooms.CORRIDOR_TRC, MA4Rooms.CORRIDOR_BRC]
+#     joint_goals = list(itertools.product(g_all, g_right))
+#     joint_goals = [list(el) for el in joint_goals]
+#
+#     env_kwargs["joint_goals"] = joint_goals
+#     env_B = MA4Rooms(**env_kwargs)
+#
+#     env_B = MA4RoomsWrapper(env_B)
+#
+#     Q_B, stats_B = Goal_Oriented_Q_learning(env_B, print_prefix="B", **hyper_params)
+#     library.save_extended_Q(Q_B, base_pkl_path + "Q_B.pkl")
+#
+#     benchmark.follow_policies(env_B, Q_B, all_test_joint_starts,
+#                               f"trajs/corridors/{TRAJ_FOLDER_NO}/Q_B_traj.txt")
+#
+#     test_composition(Q_A, Q_B, env_A)
 
 
 def test_composition(Q_A, Q_B, env):
@@ -252,14 +252,16 @@ def load_Q(base_path):
     return Q_A, Q_B, env
 
 
-def test_load(folder_no):
-    ################
-    # ENVIRONMENTS #
-    ################
+def load_Q_env_AB(folder_no):
     env_kwargs = ENV_KWARGS
+    hyper_params = HYPER_PARAMS
 
     g_all = [MA4Rooms.CORRIDOR_BLC, MA4Rooms.CORRIDOR_BRC,
              MA4Rooms.CORRIDOR_TLC, MA4Rooms.CORRIDOR_TRC]
+
+    ################
+    # ENVIRONMENTS #
+    ################
 
     # ENV A
     g_bottom = [MA4Rooms.CORRIDOR_BLC, MA4Rooms.CORRIDOR_BRC]
@@ -283,8 +285,15 @@ def test_load(folder_no):
     ##########
     # LOAD Q #
     ##########
-    Q_A = library.load_extended_Q(f"Q_pkls/corridors/{folder_no}/Q_A.pkl", env_A.action_space.n)
-    Q_B = library.load_extended_Q(f"Q_pkls/corridors/{folder_no}/Q_B.pkl", env_A.action_space.n)
+    Q_A = library.load_extended_Q(f"Q_pkls/corridors/{folder_no}/Q_A.pkl")
+    Q_B = library.load_extended_Q(f"Q_pkls/corridors/{folder_no}/Q_B.pkl")
+
+    return env_A, env_B, Q_A, Q_B
+
+
+def test_load(folder_no):
+    # Load envs and Qs
+    env_A, env_B, Q_A, Q_B = load_Q_env_AB(folder_no)
 
     ###################
     # FOLLOW POLICIES #
@@ -292,7 +301,8 @@ def test_load(folder_no):
     all_test_starts = [MA4Rooms.TL_CNR, MA4Rooms.TR_CNR, MA4Rooms.BL_CNR, MA4Rooms.BR_CNR]
     all_test_joint_starts = list(itertools.product(all_test_starts, all_test_starts))
     all_test_joint_starts = [list(el) for el in all_test_joint_starts]
-    all_test_joint_starts.append([(2, 2), (5, 2)])
+    # Remove joint_starts with collisions
+    all_test_joint_starts = list(filter(lambda x: x[0] != x[1], all_test_joint_starts))
 
     benchmark.follow_policies(env_A, Q_A, all_test_joint_starts, f"trajs/corridors/{TRAJ_FOLDER_NO}/Q_A_traj.txt")
     benchmark.follow_policies(env_B, Q_B, all_test_joint_starts, f"trajs/corridors/{TRAJ_FOLDER_NO}/Q_B_traj.txt")
@@ -301,6 +311,18 @@ def test_load(folder_no):
     # TEST COMPOSITION #
     ####################
     test_composition(Q_A, Q_B, env_A)
+
+
+def follow_and_policy(load_folder_no, joint_start_state):
+    env_A, env_B, Q_A, Q_B = load_Q_env_AB(load_folder_no)
+
+    n_actions = env_A.action_space.n
+
+    AND_PTL = partial(AND, n_actions=n_actions)
+
+    Q_comp_and = AND_PTL(Q_A, Q_B)
+    library.follow_extended_q_policy(env_A, Q_comp_and, joint_start_state=joint_start_state,
+                                     is_rendering=True, render_mode="canvas")
 
 
 def print_goals():
@@ -317,5 +339,6 @@ def print_goals():
 
 if __name__ == '__main__':
     # main()
-    # test_load(4)
-    train_multiproc()
+    # test_load(17)
+    # train_multiproc()
+    follow_and_policy(17, [(2, 2), (5, 2)])
