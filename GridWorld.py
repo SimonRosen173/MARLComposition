@@ -28,11 +28,14 @@ class MAGridWorld(gym.Env):
                  terminal_states: Union[List[int], List[Tuple[int, int]]],
                  joint_start_state: Optional[Union[List[Tuple[int, int]], List[int]]] = None,
                  grid: Optional[Union[np.ndarray, str]] = None,
+
                  step_reward: float = -0.02,
                  wait_reward: float = - 0.01, wait_at_goal_reward: float = -0.001,
-                 collide_reward: float = -1,
+                 collide_reward: float = -1, max_steps_reached_reward: float = -2,
                  goal_reward: float = 2, terminal_reward: float = -1,
                  rmin: float = -2,
+
+                 max_steps: int = 1000,
                  is_flatten_states: float = True,
                  random_starts: float = False,
                  is_warning: bool = True,
@@ -65,6 +68,10 @@ class MAGridWorld(gym.Env):
 
         self._is_flatten_states = is_flatten_states
         self._random_starts = random_starts
+
+        self._max_steps = max_steps
+        self._curr_step = 0
+        self._is_episode_complete = False
 
         # --------
         #  CHECKS
@@ -153,6 +160,7 @@ class MAGridWorld(gym.Env):
         self._goal_reward = goal_reward
         self._collide_reward = collide_reward
         self._terminal_reward = terminal_reward
+        self._max_steps_reached_reward = max_steps_reached_reward
 
         self._joint_state = self._joint_start_state
 
@@ -246,7 +254,7 @@ class MAGridWorld(gym.Env):
                 return True, "default"
 
             # Pass through collision. I.e. agents must pass through each other to reach next state
-            if next_joint_state[0] == curr_joint_state[1] or next_joint_state[1] == curr_joint_state[0]:
+            if next_joint_state[0] == curr_joint_state[1] and next_joint_state[1] == curr_joint_state[0]:
                 return True, "passthrough"
 
         return False, ""
@@ -302,6 +310,10 @@ class MAGridWorld(gym.Env):
                 info += f"wall/obstacle collision for agent {i}, "
                 # state_invalid = True
 
+            if curr_state in self._terminal_states:
+                next_state = curr_state
+                info += f"agent {i} is in terminal state and cannot move, "
+
             next_joint_state.append(next_state)
 
         # agent_collision = False
@@ -353,6 +365,8 @@ class MAGridWorld(gym.Env):
         return flat_joint_state
 
     def reset(self, joint_start_state=None, **kwargs) -> Union[List[Tuple[int, int]], List[int]]:
+        self._curr_step = 0
+
         if self._random_starts:
             self._joint_start_state = self._rand_valid_start()
 
@@ -375,11 +389,18 @@ class MAGridWorld(gym.Env):
     def step(self, joint_action: Union[List[int], int], is_action_flattened: bool = False) \
             -> Tuple[list[int], float, bool, str]:
         #
+        self._curr_step += 1
+
         if is_action_flattened:
             assert self._n_agents == 2
             joint_action = list(np.unravel_index(joint_action, (self._n_actions, self._n_actions)))
 
         next_state, reward, is_done, info = self._take_joint_action(joint_action)
+
+        if self._curr_step > self._max_steps:
+            is_done = True
+            reward = self._max_steps_reached_reward
+            info += f"[EPISODE COMPLETE] max steps reached"
 
         self.trajectory.append(next_state)
 
@@ -735,8 +756,10 @@ def interactive_env():
         "n_actions": 5,
         "goal_reward": 2,
         "collide_reward": -0.1,
-        "joint_start_state": [MA4Rooms.BR_CNR, MA4Rooms.BL_CNR],  # It currently doesn't work if this isn't specified
+        # "joint_start_state": [MA4Rooms.BR_CNR, MA4Rooms.BL_CNR],
+        "joint_start_state": [(10, 4), (10, 8)],
         "random_starts": False,
+        "max_steps": 5,
         "rooms_type": "corridors"
     }
 
