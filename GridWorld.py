@@ -398,10 +398,11 @@ class MAGridWorld(gym.Env):
                 self._vis_grid = vis.VisGrid(grid, (400, 400), 25,
                                              joint_goals=joint_goals, tick_time=render_options["tick_time"])
 
+                self._vis_grid.update_2_agents_pos(joint_state)
                 # # TEMP
-                # self._vis_grid.window.getMouse()
-
-            self._vis_grid.update_2_agents_pos(joint_state)
+                self._vis_grid.window.getMouse()
+            else:
+                self._vis_grid.update_2_agents_pos(joint_state)
 
             # self._vis_grid.window.getMouse()
 

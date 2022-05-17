@@ -87,16 +87,16 @@ def vis_corridors(folder_no, file_name, task_type, save_video=False, tick_time=0
     g_right = [MA4Rooms.CORRIDOR_TRC, MA4Rooms.CORRIDOR_BRC]
     joint_goals = None
 
-    if task_type == "A":
+    if task_type == "A" or task_type == "A_SNG":
         # Agent 1 must go to a bottom goal (i.e., BLC or BRC)
         # Agent 2 can go to any goal
         joint_goals = list(itertools.product(g_bottom, g_all))
 
-    elif task_type == "B":
+    elif task_type == "B" or task_type == "B_SNG":
         # Agent 1 can go to any goal
         # Agent 2 must go to a right goal (i.e., TRC or BRC)
         joint_goals = list(itertools.product(g_all, g_right))
-    elif task_type == "A_AND_B":
+    elif task_type == "A_AND_B" or task_type == "A_AND_B_SNG":
         # Agent 1 must go to a bottom goal (i.e., BLC or BRC)
         # Agent 2 must go to a right goal (i.e., TRC or BRC)
         joint_goals = list(itertools.product(g_bottom, g_right))
@@ -123,5 +123,5 @@ def vis_corridors(folder_no, file_name, task_type, save_video=False, tick_time=0
 
 
 if __name__ == "__main__":
-    vis_corridors(16, "Q_comp_and_traj.txt", task_type="A_AND_B", save_video=True, tick_time=0.01)
+    vis_corridors(18, "Q_B_sng_traj.txt", task_type="B_SNG", save_video=True, tick_time=0.01)
 

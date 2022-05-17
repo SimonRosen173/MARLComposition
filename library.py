@@ -1,4 +1,5 @@
 import pickle
+import time
 
 import gym
 import numpy as np
@@ -234,13 +235,14 @@ def Goal_Oriented_Q_learning(env, T_states=None, Q_optimal=None,
 
 
 def follow_extended_q_policy(env: gym.Env, Q, joint_start_state=None, is_rendering=False, render_mode="",
-                             render_delay=0, max_steps=100):
+                             render_delay=0.1, max_steps=100):
     behaviour_policy = epsilon_greedy_generalised_policy_improvement(env, Q, epsilon=0)
     step_no = 0
 
     state = env.reset(joint_start_state=joint_start_state)
     if is_rendering:
         env.render(mode=render_mode)
+        time.sleep(render_delay)
 
     is_done = False
 
@@ -253,6 +255,7 @@ def follow_extended_q_policy(env: gym.Env, Q, joint_start_state=None, is_renderi
 
         if is_rendering:
             env.render(mode=render_mode)
+            time.sleep(render_delay)
 
 
 def follow_q_policy(env: gym.Env, Q, joint_start_state=None, is_rendering=True, render_mode="", render_delay=0):
