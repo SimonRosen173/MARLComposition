@@ -257,6 +257,17 @@ class MAGridWorld(gym.Env):
             if next_joint_state[0] == curr_joint_state[1] and next_joint_state[1] == curr_joint_state[0]:
                 return True, "passthrough"
 
+            #
+            if next_joint_state[0] == curr_joint_state[1] or next_joint_state[1] == curr_joint_state[0]:
+                x11, y11 = curr_joint_state[0]  # curr state for agent 1
+                x21, y21 = curr_joint_state[1]  # curr state for agent 2
+
+                x12, y12 = next_joint_state[0]  # next state for agent 1
+                x22, y22 = next_joint_state[1]  # next state for agent 2
+
+                if not (x11 == x12 == x21 == x22 or y11 == y12 == y21 == y22):
+                    return True, "side-on"
+
         return False, ""
 
     # Apply dynamics
@@ -759,7 +770,6 @@ def interactive_env():
         # "joint_start_state": [MA4Rooms.BR_CNR, MA4Rooms.BL_CNR],
         "joint_start_state": [(10, 4), (10, 8)],
         "random_starts": False,
-        "max_steps": 5,
         "rooms_type": "corridors"
     }
 
