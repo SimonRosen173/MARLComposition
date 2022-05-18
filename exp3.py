@@ -9,8 +9,8 @@ import multiprocessing
 
 import itertools
 
-BASE_PKL_PATH = "Q_pkls/corridors/19/"
-TRAJ_FOLDER_NO = 19
+TRAJ_FOLDER_NO = 20
+BASE_PKL_PATH = f"Q_pkls/corridors/{TRAJ_FOLDER_NO}/"
 MAXITERS = 50000
 
 ENV_KWARGS = {
@@ -22,7 +22,7 @@ ENV_KWARGS = {
     "wait_at_goal_reward": -0.001,
     "terminal_reward": -2,
     "collide_reward": -0.1,
-    "rmin": -50000,  # max_steps * collide_reward - 10
+    "rmin": -500000,  # max_steps * collide_reward - 10
     "joint_start_state": [(1, 1), (11, 11)],  # It currently doesn't work if this isn't specified
     "random_starts": True,
     "rooms_type": "corridors",
@@ -35,7 +35,7 @@ HYPER_PARAMS = {
     "epsilon": 0.25,  # Will be ignored if is_eps_decay = True
 
     "is_printing": True,
-    "print_interval": 500,
+    "print_interval": 10,
 
     "is_eps_decay": True,
     "eps_start": 1.0,
@@ -197,6 +197,8 @@ def train_task(task_id):
 
         Q_A, stats_A = Goal_Oriented_Q_learning(env_A, print_prefix=task_id, **hyper_params)
 
+        print(f"[A] - min return = {np.min(stats_A['R'])}")
+
         library.save_extended_Q(Q_A, BASE_PKL_PATH + "Q_A.pkl")
 
         benchmark.follow_policies(env_A, Q_A, all_test_joint_starts, f"trajs/corridors/{TRAJ_FOLDER_NO}/Q_A_traj.txt")
@@ -218,6 +220,9 @@ def train_task(task_id):
         env_B = MA4RoomsWrapper(env_B)
 
         Q_B, stats_B = Goal_Oriented_Q_learning(env_B, print_prefix=task_id, **hyper_params)
+
+        print(f"[B] - min return = {np.min(stats_B['R'])}")
+
         library.save_extended_Q(Q_B, BASE_PKL_PATH + "Q_B.pkl")
 
         benchmark.follow_policies(env_B, Q_B, all_test_joint_starts, f"trajs/corridors/{TRAJ_FOLDER_NO}/Q_B_traj.txt")
