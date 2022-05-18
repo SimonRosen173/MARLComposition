@@ -31,11 +31,11 @@ class MAGridWorld(gym.Env):
 
                  step_reward: float = -0.02,
                  wait_reward: float = - 0.01, wait_at_goal_reward: float = -0.001,
-                 collide_reward: float = -1, max_steps_reached_reward: float = -2,
+                 collide_reward: float = -1,  # max_steps_reached_reward: float = -2,
                  goal_reward: float = 2, terminal_reward: float = -1,
                  rmin: float = -2,
 
-                 max_steps: int = 1000,
+                 # max_steps: int = 1000,
                  is_flatten_states: float = True,
                  random_starts: float = False,
                  is_warning: bool = True,
@@ -69,7 +69,7 @@ class MAGridWorld(gym.Env):
         self._is_flatten_states = is_flatten_states
         self._random_starts = random_starts
 
-        self._max_steps = max_steps
+        # self._max_steps = max_steps
         self._curr_step = 0
         self._is_episode_complete = False
 
@@ -160,7 +160,7 @@ class MAGridWorld(gym.Env):
         self._goal_reward = goal_reward
         self._collide_reward = collide_reward
         self._terminal_reward = terminal_reward
-        self._max_steps_reached_reward = max_steps_reached_reward
+        # self._max_steps_reached_reward = max_steps_reached_reward
 
         self._joint_state = self._joint_start_state
 
@@ -310,9 +310,9 @@ class MAGridWorld(gym.Env):
                 info += f"wall/obstacle collision for agent {i}, "
                 # state_invalid = True
 
-            if curr_state in self._terminal_states:
-                next_state = curr_state
-                info += f"agent {i} is in terminal state and cannot move, "
+            # if curr_state in self._terminal_states:
+            #     next_state = curr_state
+            #     info += f"agent {i} is in terminal state and cannot move, "
 
             next_joint_state.append(next_state)
 
@@ -397,10 +397,10 @@ class MAGridWorld(gym.Env):
 
         next_state, reward, is_done, info = self._take_joint_action(joint_action)
 
-        if self._curr_step > self._max_steps:
-            is_done = True
-            reward = self._max_steps_reached_reward
-            info += f"[EPISODE COMPLETE] max steps reached"
+        # if self._curr_step > self._max_steps:
+        #     is_done = True
+        #     reward = self._max_steps_reached_reward
+        #     info += f"[EPISODE COMPLETE] max steps reached"
 
         self.trajectory.append(next_state)
 

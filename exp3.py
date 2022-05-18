@@ -9,8 +9,8 @@ import multiprocessing
 
 import itertools
 
-BASE_PKL_PATH = "Q_pkls/corridors/17/"
-TRAJ_FOLDER_NO = 18
+BASE_PKL_PATH = "Q_pkls/corridors/19/"
+TRAJ_FOLDER_NO = 19
 MAXITERS = 50000
 
 ENV_KWARGS = {
@@ -22,10 +22,11 @@ ENV_KWARGS = {
     "wait_at_goal_reward": -0.001,
     "terminal_reward": -2,
     "collide_reward": -0.1,
-    "rmin": -10,
+    "rmin": -50000,  # max_steps * collide_reward - 10
     "joint_start_state": [(1, 1), (11, 11)],  # It currently doesn't work if this isn't specified
     "random_starts": True,
-    "rooms_type": "corridors"
+    "rooms_type": "corridors",
+    # "max_steps": 100
 }
 
 HYPER_PARAMS = {
@@ -34,6 +35,7 @@ HYPER_PARAMS = {
     "epsilon": 0.25,  # Will be ignored if is_eps_decay = True
 
     "is_printing": True,
+    "print_interval": 500,
 
     "is_eps_decay": True,
     "eps_start": 1.0,
@@ -380,6 +382,6 @@ def print_goals():
 if __name__ == '__main__':
     # main()
     # test_load(17)
-    # train_multiproc()
-    follow_and_policy(17, [(3, 2), (4, 2)])
+    train_multiproc()
+    # follow_and_policy(17, [(3, 2), (4, 2)])
 
