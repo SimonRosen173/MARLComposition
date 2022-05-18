@@ -50,3 +50,12 @@
         "rooms_type": "corridors",
         "max_steps": 1000
     }
+
+20 - 50k iterations
+     - Updated dynamics
+         - Agents can leave goal state once entered
+         - Max steps removed
+
+21 - 50k iterations
+    - Updated dynamics
+        - Side on collisions disallowed

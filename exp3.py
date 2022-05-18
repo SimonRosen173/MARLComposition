@@ -9,7 +9,7 @@ import multiprocessing
 
 import itertools
 
-TRAJ_FOLDER_NO = 20
+TRAJ_FOLDER_NO = 21
 BASE_PKL_PATH = f"Q_pkls/corridors/{TRAJ_FOLDER_NO}/"
 MAXITERS = 50000
 
@@ -22,7 +22,7 @@ ENV_KWARGS = {
     "wait_at_goal_reward": -0.001,
     "terminal_reward": -2,
     "collide_reward": -0.1,
-    "rmin": -500000,  # max_steps * collide_reward - 10
+    "rmin": -5000,  # max_steps * collide_reward - 10
     "joint_start_state": [(1, 1), (11, 11)],  # It currently doesn't work if this isn't specified
     "random_starts": True,
     "rooms_type": "corridors",
@@ -387,6 +387,6 @@ def print_goals():
 if __name__ == '__main__':
     # main()
     # test_load(17)
-    # train_multiproc()
-    follow_and_policy(20, [(3, 2), (4, 2)])
+    train_multiproc()
+    # follow_and_policy(20, [(3, 2), (4, 2)])
 
