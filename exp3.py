@@ -323,14 +323,14 @@ def test_load(folder_no):
 def follow_and_policy(load_folder_no, joint_start_state):
     env_A, env_B, Q_A, Q_B = load_Q_env_AB(load_folder_no)
 
-    # # Follow policy for A
-    # library.follow_extended_q_policy(env_A, Q_A, joint_start_state=joint_start_state,
-    #                                  is_rendering=True, render_mode="canvas", render_delay=0.5)
-    #
-    # traj_str = env_A.get_trajectory(is_delimited=True)
-    #
-    # with open(f"trajs/corridors/{TRAJ_FOLDER_NO}/Q_A_sng_traj.txt", "w") as f:
-    #     f.write(traj_str + "\n")
+    # Follow policy for A
+    library.follow_extended_q_policy(env_A, Q_A, joint_start_state=joint_start_state,
+                                     is_rendering=True, render_mode="canvas", render_delay=0.5)
+
+    traj_str = env_A.get_trajectory(is_delimited=True)
+
+    with open(f"trajs/corridors/{TRAJ_FOLDER_NO}/Q_A_sng_traj.txt", "w") as f:
+        f.write(traj_str + "\n")
 
     # Follow policy for B
     library.follow_extended_q_policy(env_B, Q_B, joint_start_state=joint_start_state,
@@ -340,36 +340,36 @@ def follow_and_policy(load_folder_no, joint_start_state):
 
     with open(f"trajs/corridors/{TRAJ_FOLDER_NO}/Q_B_sng_traj.txt", "w") as f:
         f.write(traj_str + "\n")
-    #
-    # ###########
-    # # A AND B #
-    # ###########
-    #
-    # n_actions = env_A.action_space.n
-    #
-    # AND_PTL = partial(AND, n_actions=n_actions)
-    #
-    # Q_comp_and = AND_PTL(Q_A, Q_B)
-    #
-    # # ENV A AND B
-    # env_kwargs = ENV_KWARGS
-    # g_bottom = [MA4Rooms.CORRIDOR_BLC, MA4Rooms.CORRIDOR_BRC]
-    # g_right = [MA4Rooms.CORRIDOR_TRC, MA4Rooms.CORRIDOR_BRC]
-    #
-    # joint_goals = list(itertools.product(g_bottom, g_right))
-    # joint_goals = [list(el) for el in joint_goals]
-    #
-    # env_kwargs["joint_goals"] = joint_goals
-    # env_A_and_B = MA4Rooms(**env_kwargs)
-    # env_A_and_B = MA4RoomsWrapper(env_A_and_B)
-    #
-    # library.follow_extended_q_policy(env_A_and_B, Q_comp_and, joint_start_state=joint_start_state,
-    #                                  is_rendering=True, render_mode="canvas", render_delay=0.5)
-    #
-    # traj_str = env_A_and_B.get_trajectory(is_delimited=True)
-    #
-    # with open(f"trajs/corridors/{TRAJ_FOLDER_NO}/Q_A_and_B_sng_traj.txt", "w") as f:
-    #     f.write(traj_str + "\n")
+
+    ###########
+    # A AND B #
+    ###########
+
+    n_actions = env_A.action_space.n
+
+    AND_PTL = partial(AND, n_actions=n_actions)
+
+    Q_comp_and = AND_PTL(Q_A, Q_B)
+
+    # ENV A AND B
+    env_kwargs = ENV_KWARGS
+    g_bottom = [MA4Rooms.CORRIDOR_BLC, MA4Rooms.CORRIDOR_BRC]
+    g_right = [MA4Rooms.CORRIDOR_TRC, MA4Rooms.CORRIDOR_BRC]
+
+    joint_goals = list(itertools.product(g_bottom, g_right))
+    joint_goals = [list(el) for el in joint_goals]
+
+    env_kwargs["joint_goals"] = joint_goals
+    env_A_and_B = MA4Rooms(**env_kwargs)
+    env_A_and_B = MA4RoomsWrapper(env_A_and_B)
+
+    library.follow_extended_q_policy(env_A_and_B, Q_comp_and, joint_start_state=joint_start_state,
+                                     is_rendering=True, render_mode="canvas", render_delay=0.5)
+
+    traj_str = env_A_and_B.get_trajectory(is_delimited=True)
+
+    with open(f"trajs/corridors/{TRAJ_FOLDER_NO}/Q_A_and_B_sng_traj.txt", "w") as f:
+        f.write(traj_str + "\n")
 
 
 def print_goals():
@@ -387,6 +387,6 @@ def print_goals():
 if __name__ == '__main__':
     # main()
     # test_load(17)
-    train_multiproc()
-    # follow_and_policy(17, [(3, 2), (4, 2)])
+    # train_multiproc()
+    follow_and_policy(20, [(3, 2), (4, 2)])
 
