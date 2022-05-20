@@ -274,7 +274,7 @@ class MAGridWorld(gym.Env):
             if next_joint_state[0] == curr_joint_state[1] and next_joint_state[1] == curr_joint_state[0]:
                 return True, "passthrough"
 
-            #
+            # side-on collision
             if next_joint_state[0] == curr_joint_state[1] or next_joint_state[1] == curr_joint_state[0]:
                 x11, y11 = curr_joint_state[0]  # curr state for agent 1
                 x21, y21 = curr_joint_state[1]  # curr state for agent 2
