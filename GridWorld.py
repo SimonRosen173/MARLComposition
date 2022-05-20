@@ -28,6 +28,7 @@ class MAGridWorld(gym.Env):
                  terminal_states: Union[List[int], List[Tuple[int, int]]],
                  joint_start_state: Optional[Union[List[Tuple[int, int]], List[int]]] = None,
                  grid: Optional[Union[np.ndarray, str]] = None,
+                 grid_file: str = "",
 
                  step_reward: float = -0.02,
                  wait_reward: float = - 0.01, wait_at_goal_reward: float = -0.001,
@@ -42,7 +43,7 @@ class MAGridWorld(gym.Env):
                  render_mode: str = "ascii",
                  render_options: Dict = {"tick_time": 0.01}
                  ):
-        if grid is None:
+        if grid is None and grid_file == "":
             # 4 rooms domain -> Probs move to 4 rooms subclass
             grid = "1 1 1 1 1 1 1 1 1 1 1 1 1\n" \
                    "1 0 0 0 0 0 1 0 0 0 0 0 1\n" \
@@ -57,6 +58,9 @@ class MAGridWorld(gym.Env):
                    "1 0 0 0 0 0 0 0 0 0 0 0 1\n" \
                    "1 0 0 0 0 0 1 0 0 0 0 0 1\n" \
                    "1 1 1 1 1 1 1 1 1 1 1 1 1"
+
+        if grid_file != "":
+            grid = MAGridWorld._read_grid_from_file(grid_file)
 
         if type(grid) == str:
             grid = [[int(el) for el in row.split(" ")] for row in grid.split("\n")]
@@ -177,6 +181,19 @@ class MAGridWorld(gym.Env):
 
         self._render_mode = render_mode
         self._vis_grid = None
+
+    @staticmethod
+    def _read_grid_from_file(file_name):
+        with open(file_name) as f:
+            grid_arr = []
+            for line in f:
+                curr_arr = line.split(" ")
+                curr_arr = [int(el) for el in curr_arr]
+                grid_arr.append(curr_arr)
+
+            grid = np.asarray(grid_arr)
+
+        return grid
 
     def _in_bounds(self, coord: Tuple[int, int]):
         x, y = coord
@@ -813,10 +830,18 @@ def interactive_env():
         print("##############")
 
 
+def test_grid_load():
+    import os
+    curr_dir = os.getcwd()
+    # full_path = "\\".join(curr_dir.split("\\")[:-1])  # Remove last folder from path
+    print(MAGridWorld._read_grid_from_file(curr_dir+ "\\maps\\corridors_alt.txt"))
+
+
 if __name__ == "__main__":
     # main()
     # test_ma4rooms()
-    interactive_env()
+    # interactive_env()
     # test_wrapper()
     # test_traj()
     # test_1()
+    test_grid_load()
