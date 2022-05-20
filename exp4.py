@@ -10,10 +10,10 @@ import multiprocessing
 import itertools
 import os
 
-FOLDER_NO = 1
+FOLDER_NO = 2
 TRAJ_BASE_PATH = f"trajs/corridors_alt/{FOLDER_NO}"
 BASE_PKL_PATH = f"Q_pkls/corridors_alt/{FOLDER_NO}"
-MAXITERS = 10000
+MAXITERS = 50000
 
 grid_file_path = os.getcwd() + "\\maps\\corridors_alt.txt"
 
@@ -23,11 +23,11 @@ ENV_KWARGS = {
     "n_actions": 5,
     "goal_reward": 2,
     "wait_reward": -0.01,
-    "step_reward": -0.01,
+    "step_reward": -0.02,
     "wait_at_goal_reward": -0.001,
     "terminal_reward": -2,
     "collide_reward": -0.1,
-    "rmin": -5000,  # max_steps * collide_reward - 10
+    "rmin": -2,  # max_steps * collide_reward - 10
     "joint_start_state": [(1, 1), (11, 1)],  # It currently doesn't work if this isn't specified
     "random_starts": True,
     "rooms_type": "corridors",
