@@ -81,10 +81,15 @@ def vis_C():
 
 
 def vis_corridors(folder_no, file_name, task_type, save_video=False, tick_time=0.5):
-    g_all = [MA4Rooms.CORRIDOR_BLC, MA4Rooms.CORRIDOR_BRC,
+    # g_all = [MA4Rooms.CORRIDOR_BLC, MA4Rooms.CORRIDOR_BRC,
+    #          MA4Rooms.CORRIDOR_TLC, MA4Rooms.CORRIDOR_TRC]
+    # g_bottom = [MA4Rooms.CORRIDOR_BLC, MA4Rooms.CORRIDOR_BRC]
+    # g_right = [MA4Rooms.CORRIDOR_TRC, MA4Rooms.CORRIDOR_BRC]
+    g_all = [MA4Rooms.CORRIDOR_BLC,  # , MA4Rooms.CORRIDOR_BRC,
              MA4Rooms.CORRIDOR_TLC, MA4Rooms.CORRIDOR_TRC]
-    g_bottom = [MA4Rooms.CORRIDOR_BLC, MA4Rooms.CORRIDOR_BRC]
-    g_right = [MA4Rooms.CORRIDOR_TRC, MA4Rooms.CORRIDOR_BRC]
+    g_bottom = [MA4Rooms.CORRIDOR_BLC]  # , MA4Rooms.CORRIDOR_BRC]
+    g_right = [MA4Rooms.CORRIDOR_TRC]  # , MA4Rooms.CORRIDOR_BRC]
+
     joint_goals = None
 
     if task_type == "A" or task_type == "A_SNG":
@@ -114,14 +119,14 @@ def vis_corridors(folder_no, file_name, task_type, save_video=False, tick_time=0
     # agent 1 -> red
     # agent 2 -> green
 
-    traj_path = full_path + f"/trajs/corridors/{folder_no}/{file_name}"
+    traj_path = full_path + f"/trajs/corridors_alt/{folder_no}/{file_name}"
     tmp_folder_path = full_path + "/traj_gifs/tmp"
-    video_path = full_path + f"/traj_gifs/{folder_no}/{task_type}"
+    video_path = full_path + f"/traj_gifs/corridors_alt/{folder_no}/{task_type}"
     animate_traj_file(traj_path, grid, joint_goals=joint_goals,
                       tick_time=tick_time,
                       save_video=save_video, tmp_folder=tmp_folder_path, video_path=video_path)
 
 
 if __name__ == "__main__":
-    vis_corridors(21, "Q_B_sng_traj.txt", task_type="B_SNG", save_video=True, tick_time=0.01)
+    vis_corridors(1, "Q_comp_and_traj.txt", task_type="A_AND_B", save_video=True, tick_time=0.01)
 
