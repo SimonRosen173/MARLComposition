@@ -10,10 +10,10 @@ import multiprocessing
 import itertools
 import os
 
-FOLDER_NO = 2
+FOLDER_NO = 3
 TRAJ_BASE_PATH = f"trajs/corridors_alt/{FOLDER_NO}"
 BASE_PKL_PATH = f"Q_pkls/corridors_alt/{FOLDER_NO}"
-MAXITERS = 50000
+MAXITERS = 100000
 
 grid_file_path = os.getcwd() + "\\maps\\corridors_alt.txt"
 
